@@ -275,6 +275,20 @@ async function runTests() {
       assert(!("phone" in publicRepresentation), "Public representation tidak mengekspos Nomor Telepon")
     }
 
+    // -------------------------------------------------------------
+    // TEST SUITE 8: CSV EXPORT STRUCTURE INTEGRITY
+    // -------------------------------------------------------------
+    console.log("\n📌 8. Menguji Utilitas & Struktur Data Export CSV:")
+    const teachersList = await prisma.teacher.findMany({ take: 5 })
+    assert(teachersList.length > 0, "Data guru dapat dimuat untuk keperluan export CSV")
+    const sampleTeacher = teachersList[0]
+    assert(sampleTeacher.nip !== undefined, "Kolom NIP tersedia pada data guru")
+
+    const studentsList = await prisma.student.findMany({ take: 5, include: { major: true } })
+    assert(studentsList.length > 0, "Data siswa dapat dimuat untuk keperluan export CSV")
+    const sampleStud = studentsList[0]
+    assert(sampleStud.nisn !== undefined, "Kolom NISN tersedia pada data siswa")
+    assert(sampleStud.major !== null, "Relasi program keahlian siswa terhubung untuk export")
   } catch (error) {
     console.error("\n💥 UNEXPECTED ERROR DURING TESTS:", error)
     failedTests++

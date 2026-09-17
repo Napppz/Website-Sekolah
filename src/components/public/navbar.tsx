@@ -18,9 +18,11 @@ import {
   UserPlus,
   Compass,
   Award,
+  Search,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
+import { CommandPalette } from "@/components/common/command-palette"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,6 +124,7 @@ const navLinks: NavItem[] = [
 export function Navbar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = React.useState(false)
+  const [commandOpen, setCommandOpen] = React.useState(false)
 
   const isActive = (path?: string) => {
     if (!path) return false
@@ -227,8 +230,20 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Right Actions: Theme Toggle & PPDB CTA */}
-        <div className="hidden lg:flex items-center gap-3">
+        {/* Right Actions: Command Palette, Theme Toggle & PPDB CTA */}
+        <div className="hidden lg:flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCommandOpen(true)}
+            className="h-9 px-3 rounded-xl gap-2 text-xs font-medium text-muted-foreground hover:text-foreground border-border/70 shadow-2xs cursor-pointer"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span>Cari...</span>
+            <kbd className="pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
+              ⌘K
+            </kbd>
+          </Button>
           <ThemeToggle />
           <Button
             asChild
@@ -243,7 +258,16 @@ export function Navbar() {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center gap-2 xl:hidden">
+        <div className="flex items-center gap-1.5 xl:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCommandOpen(true)}
+            className="h-9 w-9 rounded-xl text-muted-foreground"
+            title="Pencarian Cepat"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
           <ThemeToggle />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -342,6 +366,8 @@ export function Navbar() {
           </Sheet>
         </div>
       </div>
+
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </header>
   )
 }

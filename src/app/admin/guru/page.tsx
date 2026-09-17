@@ -12,6 +12,7 @@ import {
   BookOpen,
   Loader2,
   Upload,
+  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +26,7 @@ import {
 import { DataTable, Column } from "@/components/common/data-table"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { createTeacher, updateTeacher, deleteTeacher } from "@/actions/teachers"
+import { exportToCsv } from "@/lib/export-csv"
 
 interface TeacherData {
   id: string
@@ -157,6 +159,40 @@ export default function AdminGuruPage() {
     }
   }
 
+  const handleExportCsv = () => {
+    try {
+      if (teachers.length === 0) {
+        toast.error("Tidak ada data guru untuk diekspor")
+        return
+      }
+
+      const columnsToExport = [
+        { key: "_index", label: "No" },
+        { key: "nip", label: "NIP", format: (val: string) => `'${val}` },
+        {
+          key: "name",
+          label: "Nama Lengkap & Gelar",
+          format: (val: string, item: TeacherData) =>
+            item.title ? `${val}, ${item.title}` : val,
+        },
+        {
+          key: "gender",
+          label: "Jenis Kelamin",
+          format: (val: string) => (val === "L" ? "Laki-laki" : "Perempuan"),
+        },
+        { key: "position", label: "Jabatan Struktural" },
+        { key: "subject", label: "Mata Pelajaran" },
+        { key: "email", label: "Alamat Email", format: (val: string | null) => val || "-" },
+      ]
+
+      const dateStr = new Date().toISOString().split("T")[0]
+      exportToCsv(`data-guru-smk-${dateStr}`, columnsToExport, teachers)
+      toast.success(`Berhasil mengekspor ${teachers.length} data guru ke CSV/Excel!`)
+    } catch {
+      toast.error("Gagal mengekspor data guru")
+    }
+  }
+
   // Define Table Columns
   const columns: Column<TeacherData>[] = [
     {
@@ -231,18 +267,29 @@ export default function AdminGuruPage() {
             Kelola direktori pengajar, mata pelajaran, dan jabatan struktural sekolah.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingTeacher(null)
-            setPhotoUrl("")
-            setIsDialogOpen(true)
-          }}
-          size="sm"
-          className="rounded-xl font-semibold gap-1.5 h-9"
-        >
-          <Plus className="h-4 w-4" />
-          Tambah Guru Baru
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExportCsv}
+            variant="outline"
+            size="sm"
+            className="rounded-xl font-semibold gap-1.5 border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-2xs h-9"
+          >
+            <Download className="h-4 w-4" />
+            Export Excel / CSV
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingTeacher(null)
+              setPhotoUrl("")
+              setIsDialogOpen(true)
+            }}
+            size="sm"
+            className="rounded-xl font-semibold gap-1.5 h-9"
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Guru Baru
+          </Button>
+        </div>
       </div>
 
       {/* Reusable Data Table */}

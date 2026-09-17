@@ -25,9 +25,11 @@ import {
   ExternalLink,
   Shield,
   Bell,
+  Search,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
+import { CommandPalette } from "@/components/common/command-palette"
 import {
   Sheet,
   SheetContent,
@@ -77,8 +79,20 @@ const menuSections = [
 
 export function AdminLayoutShell({ children, user }: AdminLayoutShellProps) {
   const pathname = usePathname()
-  const [mobileOpen, setMobileOpen] = React.useState(false)
   const [collapsed, setCollapsed] = React.useState(false)
+  const [mobileOpen, setMobileOpen] = React.useState(false)
+  const [commandOpen, setCommandOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setCommandOpen((open) => !open)
+      }
+    }
+    document.addEventListener("keydown", down)
+    return () => document.removeEventListener("keydown", down)
+  }, [])
 
   // Do not show admin chrome on login page
   if (pathname === "/admin/login") {
@@ -257,6 +271,18 @@ export function AdminLayoutShell({ children, user }: AdminLayoutShellProps) {
           {/* Right Header Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCommandOpen(true)}
+              className="h-8 px-2.5 rounded-xl gap-2 text-xs font-medium text-muted-foreground hover:text-foreground border-border/70 shadow-2xs cursor-pointer flex"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Cari...</span>
+              <kbd className="pointer-events-none inline-flex h-4.5 select-none items-center gap-0.5 rounded border bg-muted px-1 font-mono text-[9px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </Button>
+            <Button
               asChild
               variant="outline"
               size="sm"
@@ -285,6 +311,8 @@ export function AdminLayoutShell({ children, user }: AdminLayoutShellProps) {
           {children}
         </main>
       </div>
+
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   )
 }

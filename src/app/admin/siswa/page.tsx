@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,6 +22,7 @@ import {
 import { DataTable, Column } from "@/components/common/data-table"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { createStudent, updateStudent, deleteStudent } from "@/actions/students"
+import { exportToCsv } from "@/lib/export-csv"
 
 interface StudentData {
   id: string
@@ -118,6 +120,52 @@ export default function AdminSiswaPage() {
     }
   }
 
+  const handleExportCsv = () => {
+    try {
+      if (students.length === 0) {
+        toast.error("Tidak ada data siswa untuk diekspor")
+        return
+      }
+
+      const columnsToExport = [
+        { key: "_index", label: "No" },
+        { key: "nisn", label: "NISN", format: (val: string) => `'${val}` },
+        { key: "nis", label: "NIS", format: (val: string) => `'${val}` },
+        { key: "name", label: "Nama Siswa" },
+        {
+          key: "gender",
+          label: "Jenis Kelamin",
+          format: (val: string) => (val === "L" ? "Laki-laki" : "Perempuan"),
+        },
+        { key: "classGrade", label: "Tingkat / Kelas", format: (val: string) => `Kelas ${val}` },
+        {
+          key: "major",
+          label: "Program Keahlian",
+          format: (val: any) => (val ? `${val.name} (${val.code})` : "-"),
+        },
+        {
+          key: "status",
+          label: "Status Siswa",
+          format: (val: string) => {
+            const map: Record<string, string> = {
+              ACTIVE: "Aktif",
+              GRADUATED: "Lulus",
+              TRANSFERRED: "Pindah",
+              DROPOUT: "Non-Aktif",
+            }
+            return map[val] || val
+          },
+        },
+      ]
+
+      const dateStr = new Date().toISOString().split("T")[0]
+      exportToCsv(`data-siswa-smk-${dateStr}`, columnsToExport, students)
+      toast.success(`Berhasil mengekspor ${students.length} data siswa ke CSV/Excel!`)
+    } catch {
+      toast.error("Gagal mengekspor data siswa")
+    }
+  }
+
   // Table Columns
   const columns: Column<StudentData>[] = [
     {
@@ -190,17 +238,28 @@ export default function AdminSiswaPage() {
             Daftar peserta didik aktif, nomor induk siswa, dan kelas rombel.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingStudent(null)
-            setIsDialogOpen(true)
-          }}
-          size="sm"
-          className="rounded-xl font-semibold gap-1.5 h-9"
-        >
-          <Plus className="h-4 w-4" />
-          Tambah Siswa Baru
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExportCsv}
+            variant="outline"
+            size="sm"
+            className="rounded-xl font-semibold gap-1.5 border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-2xs h-9"
+          >
+            <Download className="h-4 w-4" />
+            Export Excel / CSV
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingStudent(null)
+              setIsDialogOpen(true)
+            }}
+            size="sm"
+            className="rounded-xl font-semibold gap-1.5 h-9"
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Siswa Baru
+          </Button>
+        </div>
       </div>
 
       {/* Reusable Data Table */}
