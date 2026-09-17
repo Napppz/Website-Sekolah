@@ -45,6 +45,30 @@ export const metadata: Metadata = {
   },
 }
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: "SMK Negeri 1 Digital Nusantara",
+  alternateName: "SMKN 1 Digital Nusantara",
+  url: "https://smkn1digital.sch.id",
+  description:
+    "Sekolah Menengah Kejuruan Pusat Keunggulan Bidang Rekayasa Perangkat Lunak, Jaringan Komputer, DKV, Manajemen Bisnis, dan Akuntansi.",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Jl. Pendidikan Generasi No. 45, Kebayoran Baru",
+    addressLocality: "Jakarta Selatan",
+    addressRegion: "DKI Jakarta",
+    postalCode: "12150",
+    addressCountry: "ID",
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: "+62-21-7890-1234",
+    contactType: "Customer Support",
+    availableLanguage: ["Indonesian", "English"],
+  },
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -53,6 +77,10 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className={`${inter.variable} ${plusJakarta.variable} ${inter.className} min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary font-sans`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

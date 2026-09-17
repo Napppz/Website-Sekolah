@@ -14,6 +14,13 @@ const ContactSchema = z.object({
 
 export async function sendContactMessage(formData: FormData) {
   try {
+    // Anti-spam bot honeypot trap
+    const honeypot = formData.get("website_url") as string
+    if (honeypot && honeypot.trim().length > 0) {
+      // Fake success to mislead bot crawler
+      return { success: true }
+    }
+
     const rawData = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,

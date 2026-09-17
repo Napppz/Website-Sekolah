@@ -45,13 +45,19 @@ export default function KontakPage() {
     resolver: zodResolver(ContactFormSchema),
   })
 
-  const onSubmit = async (data: ContactFormData) => {
+  const onSubmit = async (data: ContactFormData, e?: React.BaseSyntheticEvent) => {
     setIsSubmitting(true)
     const formData = new FormData()
     formData.append("name", data.name)
     formData.append("email", data.email)
     formData.append("subject", data.subject)
     formData.append("message", data.message)
+
+    // Honeypot bot protection
+    const honeypot = (e?.target as HTMLFormElement)?.website_url?.value || ""
+    if (honeypot) {
+      formData.append("website_url", honeypot)
+    }
 
     try {
       const res = await sendContactMessage(formData)
@@ -190,6 +196,16 @@ export default function KontakPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  {/* Anti-bot Honeypot Input (Invisible to real humans) */}
+                  <input
+                    type="text"
+                    name="website_url"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0"
+                  />
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-foreground">

@@ -24,6 +24,12 @@ const PPDBRegisterSchema = z.object({
 
 export async function registerPPDB(formData: FormData) {
   try {
+    // Anti-spam bot honeypot trap
+    const honeypot = formData.get("extra_field") as string
+    if (honeypot && honeypot.trim().length > 0) {
+      return { success: true, registrationNo: "PPDB-2026-SPAMDROP" }
+    }
+
     const rawData = {
       fullName: formData.get("fullName") as string,
       nik: formData.get("nik") as string,

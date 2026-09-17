@@ -121,7 +121,7 @@ export default function PPDBDaftarPage() {
     }
   }
 
-  const onSubmit = async (data: PPDBFormData) => {
+  const onSubmit = async (data: PPDBFormData, e?: React.BaseSyntheticEvent) => {
     setIsSubmitting(true)
     const formData = new FormData()
     Object.entries(data).forEach(([key, val]) => {
@@ -129,6 +129,12 @@ export default function PPDBDaftarPage() {
     })
     if (uploadedDocUrl) {
       formData.append("documentUrl", uploadedDocUrl)
+    }
+
+    // Anti-spam bot honeypot trap
+    const honeypot = (e?.target as HTMLFormElement)?.extra_field?.value || ""
+    if (honeypot) {
+      formData.append("extra_field", honeypot)
     }
 
     try {
@@ -220,6 +226,16 @@ export default function PPDBDaftarPage() {
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Anti-bot Honeypot Input (Invisible to real humans) */}
+                <input
+                  type="text"
+                  name="extra_field"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0"
+                />
+
                 {/* 1. Data Pribadi Siswa */}
                 <div className="space-y-4">
                   <h3 className="font-bold text-sm text-primary uppercase tracking-wider border-b pb-2">
