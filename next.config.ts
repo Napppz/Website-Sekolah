@@ -11,6 +11,22 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "plus.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "**.r2.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "**.r2.cloudflarestorage.com",
+      },
+      ...(process.env.R2_PUBLIC_URL
+        ? [
+            {
+              protocol: (process.env.R2_PUBLIC_URL.startsWith("https") ? "https" : "http") as "https" | "http",
+              hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
+            },
+          ]
+        : []),
     ],
   },
   async rewrites() {

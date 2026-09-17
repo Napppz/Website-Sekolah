@@ -7,13 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx scripts/test-e2e.ts",
+    "test": "tsx scripts/test-storage.ts && tsx scripts/test-e2e.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1134.0",
     "@base-ui/react": "^1.8.0",
     "@hookform/resolvers": "^5.9.1",
     "@prisma/client": "^6.19.3",
