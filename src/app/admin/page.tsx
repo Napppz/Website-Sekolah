@@ -15,11 +15,19 @@ import {
   CheckCircle2,
   AlertCircle,
   Plus,
+  BarChart3,
+  PieChart as PieChartIcon,
+  Eye,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { getDashboardStats } from "@/lib/data"
+import { getDashboardStats, getDashboardAnalytics } from "@/lib/data"
+import { PPDBTrendChart } from "@/components/admin/charts/ppdb-trend-chart"
+import { PPDBStatusChart } from "@/components/admin/charts/ppdb-status-chart"
+import { StudentDistributionChart } from "@/components/admin/charts/student-distribution-chart"
+import { GenderRatioChart } from "@/components/admin/charts/gender-ratio-chart"
+import { NewsViewsChart } from "@/components/admin/charts/news-views-chart"
 
 export const dynamic = "force-dynamic"
 
@@ -28,7 +36,10 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats()
+  const [stats, analytics] = await Promise.all([
+    getDashboardStats(),
+    getDashboardAnalytics(),
+  ])
 
   const statCards = [
     {
@@ -145,6 +156,90 @@ export default async function AdminDashboardPage() {
             </Link>
           )
         })}
+      </div>
+
+      {/* ==================== ANALYTICS CHARTS SECTION ==================== */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 border-b pb-3">
+          <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+            <BarChart3 className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-extrabold text-foreground tracking-tight">
+              Analytics & Visualisasi Data
+            </h2>
+            <p className="text-[10px] text-muted-foreground">
+              Grafik interaktif untuk analisis operasional sekolah
+            </p>
+          </div>
+        </div>
+
+        {/* Row 1: PPDB Trend + PPDB Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Card className="lg:col-span-8 rounded-2xl border bg-card shadow-2xs">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Tren Pendaftar PPDB (6 Bulan Terakhir)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PPDBTrendChart data={analytics.ppdbTrend} />
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-4 rounded-2xl border bg-card shadow-2xs">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <PieChartIcon className="h-4 w-4 text-primary" />
+                Status PPDB
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PPDBStatusChart data={analytics.ppdbStatusData} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Row 2: Student Distribution + Gender Ratio */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="rounded-2xl border bg-card shadow-2xs">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <GraduationCap className="h-4 w-4 text-primary" />
+                Distribusi Siswa per Jurusan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StudentDistributionChart data={analytics.studentDistribution} />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border bg-card shadow-2xs">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Users className="h-4 w-4 text-primary" />
+                Rasio Gender Siswa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GenderRatioChart data={analytics.genderRatio} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Row 3: Top News Views */}
+        <Card className="rounded-2xl border bg-card shadow-2xs">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+              <Eye className="h-4 w-4 text-primary" />
+              Top 5 Berita Terpopuler (by Views)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NewsViewsChart data={analytics.topNewsData} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* 2-Column Operational Feeds */}

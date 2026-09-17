@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
+import { createNotification } from "@/actions/notifications"
 
 const PPDBRegisterSchema = z.object({
   fullName: z.string().min(3, "Nama lengkap minimal 3 karakter"),
@@ -104,6 +105,17 @@ export async function registerPPDB(formData: FormData) {
     } catch {
       // safe in non-HTTP contexts
     }
+
+    // Auto-create notification for admin
+    try {
+      await createNotification({
+        type: "PPDB_NEW",
+        title: "Pendaftaran PPDB Baru",
+        message: `${validated.fullName} mendaftar dari ${validated.previousSchool}`,
+        href: "/admin/ppdb",
+      })
+    } catch {}
+
     return { success: true, registrationNo: record.registrationNo }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -120,7 +132,7 @@ export async function updatePPDBStatus(id: string, status: string, notes?: strin
     if (!session?.user) {
       return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
     }
-    await prisma.pPDBRegistration.update({
+    const registration = await prisma.pPDBRegistration.update({
       where: { id },
       data: {
         status,
@@ -133,6 +145,23 @@ export async function updatePPDBStatus(id: string, status: string, notes?: strin
       revalidatePath("/ppdb")
       revalidatePath("/ppdb/status")
     } catch {}
+
+    // Auto-create notification for status change
+    const statusLabels: Record<string, string> = {
+      PENDING: "Menunggu",
+      VERIFIED: "Terverifikasi",
+      ACCEPTED: "Diterima",
+      REJECTED: "Ditolak",
+    }
+    try {
+      await createNotification({
+        type: "PPDB_STATUS_CHANGE",
+        title: `Status PPDB: ${statusLabels[status] || status}`,
+        message: `Status pendaftar ${registration.fullName} (${registration.registrationNo}) diubah menjadi ${statusLabels[status] || status}`,
+        href: "/admin/ppdb",
+      })
+    } catch {}
+
     return { success: true }
   } catch {
     return { success: false, error: "Gagal memperbarui status pendaftar" }

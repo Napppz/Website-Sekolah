@@ -289,6 +289,57 @@ async function runTests() {
     const sampleStud = studentsList[0]
     assert(sampleStud.nisn !== undefined, "Kolom NISN tersedia pada data siswa")
     assert(sampleStud.major !== null, "Relasi program keahlian siswa terhubung untuk export")
+
+    // -------------------------------------------------------------
+    // TEST SUITE 9: NOTIFICATION SYSTEM CRUD
+    // -------------------------------------------------------------
+    console.log("\n📌 9. Menguji Sistem Notifikasi (CRUD Notification Model):")
+    const testNotification = await prisma.notification.create({
+      data: {
+        type: "PPDB_NEW",
+        title: "Test: Pendaftaran PPDB Baru",
+        message: "Muhammad Test mendaftar dari SMP Test",
+        href: "/admin/ppdb",
+        isRead: false,
+      },
+    })
+    assert(testNotification.id !== undefined, "Notification berhasil dibuat (create)")
+    assert(testNotification.type === "PPDB_NEW", "Notification type tersimpan benar")
+    assert(testNotification.isRead === false, "Notification default isRead = false")
+    assert(testNotification.href === "/admin/ppdb", "Notification href link tersimpan")
+
+    const unreadCount = await prisma.notification.count({ where: { isRead: false } })
+    assert(unreadCount > 0, `Unread notification count > 0 (Total: ${unreadCount})`)
+
+    await prisma.notification.update({
+      where: { id: testNotification.id },
+      data: { isRead: true },
+    })
+    const updatedNotif = await prisma.notification.findUnique({ where: { id: testNotification.id } })
+    assert(updatedNotif?.isRead === true, "Notification berhasil ditandai dibaca (markAsRead)")
+
+    await prisma.notification.delete({ where: { id: testNotification.id } })
+    const deletedNotif = await prisma.notification.findUnique({ where: { id: testNotification.id } })
+    assert(deletedNotif === null, "Notification berhasil dihapus (cleanup)")
+
+    // -------------------------------------------------------------
+    // TEST SUITE 10: DASHBOARD ANALYTICS DATA INTEGRITY
+    // -------------------------------------------------------------
+    console.log("\n📌 10. Menguji Integritas Data Dashboard Analytics:")
+    const [majorsList, maleStudents, femaleStudents, topNewsByViews, ppdbByStatus] = await Promise.all([
+      prisma.major.findMany({ include: { _count: { select: { students: true } } } }),
+      prisma.student.count({ where: { gender: "L" } }),
+      prisma.student.count({ where: { gender: "P" } }),
+      prisma.news.findMany({ take: 5, orderBy: { views: "desc" }, select: { title: true, views: true } }),
+      prisma.pPDBRegistration.groupBy({ by: ["status"], _count: { status: true } }),
+    ])
+
+    assert(majorsList.length >= 5, `Distribusi siswa: ${majorsList.length} jurusan terdeteksi`)
+    assert(majorsList.every(m => typeof m._count?.students === "number"), "Setiap jurusan memiliki student count yang valid")
+    assert(maleStudents + femaleStudents > 0, `Gender ratio valid (L: ${maleStudents}, P: ${femaleStudents})`)
+    assert(topNewsByViews.length > 0, `Top berita tersedia: ${topNewsByViews.length} artikel`)
+    assert(topNewsByViews.every(n => typeof n.views === "number"), "Setiap berita memiliki views count yang valid")
+    assert(ppdbByStatus.length > 0, `Status PPDB terdeteksi: ${ppdbByStatus.map(s => s.status).join(", ")}`)
   } catch (error) {
     console.error("\n💥 UNEXPECTED ERROR DURING TESTS:", error)
     failedTests++

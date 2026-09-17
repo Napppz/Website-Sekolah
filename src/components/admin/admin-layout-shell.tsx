@@ -30,6 +30,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { CommandPalette } from "@/components/common/command-palette"
+import { NotificationBell } from "@/components/admin/notification-bell"
 import {
   Sheet,
   SheetContent,
@@ -282,6 +283,7 @@ export function AdminLayoutShell({ children, user }: AdminLayoutShellProps) {
                 ⌘K
               </kbd>
             </Button>
+            <NotificationBell />
             <Button
               asChild
               variant="outline"

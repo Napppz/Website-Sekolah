@@ -546,6 +546,7 @@ export async function getDashboardStats() {
       recentPPDB,
       recentNews,
       recentMessages,
+      unreadNotifications,
     ] = await Promise.all([
       prisma.teacher.count(),
       prisma.student.count(),
@@ -568,6 +569,7 @@ export async function getDashboardStats() {
         take: 5,
         orderBy: { createdAt: "desc" },
       }),
+      prisma.notification.count({ where: { isRead: false } }),
     ])
 
     return {
@@ -581,6 +583,7 @@ export async function getDashboardStats() {
       recentPPDB,
       recentNews,
       recentMessages,
+      unreadNotifications,
     }
   } catch {
     return {
@@ -591,6 +594,7 @@ export async function getDashboardStats() {
       totalAnnouncements: 10,
       totalAchievements: 10,
       totalPPDB: 48,
+      unreadNotifications: 0,
       recentPPDB: [
         {
           id: "p-1",
@@ -635,3 +639,141 @@ export async function getDashboardStats() {
     }
   }
 }
+
+export async function getDashboardAnalytics() {
+  try {
+    // Get PPDB trend by month (last 6 months)
+    const sixMonthsAgo = new Date()
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+    const [ppdbRegistrations, studentsByMajor, maleCount, femaleCount, topNews, ppdbByStatus] =
+      await Promise.all([
+        prisma.pPDBRegistration.findMany({
+          where: { createdAt: { gte: sixMonthsAgo } },
+          select: { createdAt: true },
+          orderBy: { createdAt: "asc" },
+        }),
+        prisma.major.findMany({
+          include: { _count: { select: { students: true } } },
+          orderBy: { code: "asc" },
+        }),
+        prisma.student.count({ where: { gender: "L" } }),
+        prisma.student.count({ where: { gender: "P" } }),
+        prisma.news.findMany({
+          take: 5,
+          orderBy: { views: "desc" },
+          select: { id: true, title: true, views: true, slug: true },
+        }),
+        prisma.pPDBRegistration.groupBy({
+          by: ["status"],
+          _count: { status: true },
+        }),
+      ])
+
+    // Aggregate PPDB by month
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+    const ppdbTrendMap = new Map<string, number>()
+
+    // Seed last 6 months with 0
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date()
+      d.setMonth(d.getMonth() - i)
+      const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`
+      ppdbTrendMap.set(key, 0)
+    }
+
+    ppdbRegistrations.forEach((reg) => {
+      const d = new Date(reg.createdAt)
+      const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`
+      ppdbTrendMap.set(key, (ppdbTrendMap.get(key) || 0) + 1)
+    })
+
+    const ppdbTrend = Array.from(ppdbTrendMap.entries()).map(([month, count]) => ({
+      month,
+      pendaftar: count,
+    }))
+
+    // Map students by major
+    const majorColors = ["#3b82f6", "#8b5cf6", "#f97316", "#10b981", "#ef4444"]
+    const studentDistribution = studentsByMajor.map((m, i) => ({
+      name: m.code,
+      fullName: m.name,
+      value: m._count?.students || 0,
+      color: majorColors[i % majorColors.length],
+    }))
+
+    // Gender data
+    const genderRatio = [
+      { gender: "Laki-laki", count: maleCount, color: "#3b82f6" },
+      { gender: "Perempuan", count: femaleCount, color: "#ec4899" },
+    ]
+
+    // Top news
+    const topNewsData = topNews.map((n) => ({
+      title: n.title.length > 35 ? n.title.slice(0, 35) + "..." : n.title,
+      fullTitle: n.title,
+      views: n.views,
+    }))
+
+    // PPDB status distribution
+    const statusLabels: Record<string, string> = {
+      PENDING: "Menunggu",
+      VERIFIED: "Terverifikasi",
+      ACCEPTED: "Diterima",
+      REJECTED: "Ditolak",
+    }
+    const statusColors: Record<string, string> = {
+      PENDING: "#f59e0b",
+      VERIFIED: "#3b82f6",
+      ACCEPTED: "#10b981",
+      REJECTED: "#ef4444",
+    }
+    const ppdbStatusData = ppdbByStatus.map((s) => ({
+      name: statusLabels[s.status] || s.status,
+      value: s._count.status,
+      color: statusColors[s.status] || "#94a3b8",
+    }))
+
+    return {
+      ppdbTrend,
+      studentDistribution,
+      genderRatio,
+      topNewsData,
+      ppdbStatusData,
+    }
+  } catch {
+    return {
+      ppdbTrend: [
+        { month: "Apr 2026", pendaftar: 5 },
+        { month: "Mei 2026", pendaftar: 12 },
+        { month: "Jun 2026", pendaftar: 18 },
+        { month: "Jul 2026", pendaftar: 28 },
+        { month: "Agu 2026", pendaftar: 35 },
+        { month: "Sep 2026", pendaftar: 48 },
+      ],
+      studentDistribution: [
+        { name: "RPL", fullName: "Rekayasa Perangkat Lunak", value: 180, color: "#3b82f6" },
+        { name: "TJKT", fullName: "Teknik Jaringan Komputer", value: 165, color: "#8b5cf6" },
+        { name: "DKV", fullName: "Desain Komunikasi Visual", value: 160, color: "#f97316" },
+        { name: "MPLB", fullName: "Manajemen Perkantoran", value: 140, color: "#10b981" },
+        { name: "AKL", fullName: "Akuntansi & Keuangan", value: 140, color: "#ef4444" },
+      ],
+      genderRatio: [
+        { gender: "Laki-laki", count: 420, color: "#3b82f6" },
+        { gender: "Perempuan", count: 365, color: "#ec4899" },
+      ],
+      topNewsData: [
+        { title: "Siswa SMK Digital Raih Medali...", fullTitle: "Siswa SMK Digital Raih Medali Emas LKS", views: 342 },
+        { title: "Kunjungan Industri & MoU...", fullTitle: "Kunjungan Industri & Penandatanganan MoU", views: 289 },
+        { title: "PPDB 2026/2027 Resmi Dibuka...", fullTitle: "PPDB Tahun Ajaran 2026/2027 Resmi Dibuka", views: 512 },
+      ],
+      ppdbStatusData: [
+        { name: "Menunggu", value: 20, color: "#f59e0b" },
+        { name: "Terverifikasi", value: 15, color: "#3b82f6" },
+        { name: "Diterima", value: 10, color: "#10b981" },
+        { name: "Ditolak", value: 3, color: "#ef4444" },
+      ],
+    }
+  }
+}
+

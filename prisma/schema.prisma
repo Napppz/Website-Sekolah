@@ -257,3 +257,18 @@ model ContactMessage {
   @@index([isRead])
   @@map("contact_messages")
 }
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // PPDB_NEW, CONTACT_NEW, PPDB_STATUS_CHANGE
+  title     String
+  message   String
+  href      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
