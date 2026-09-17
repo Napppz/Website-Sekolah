@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { toast } from "sonner"
 import {
   UserCheck,
@@ -12,6 +13,8 @@ import {
   ExternalLink,
   Eye,
   Loader2,
+  Download,
+  Printer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +28,7 @@ import {
 import { DataTable, Column } from "@/components/common/data-table"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { updatePPDBStatus, deletePPDB } from "@/actions/ppdb"
+import { exportToCsv } from "@/lib/export-csv"
 
 interface PPDBApplicant {
   id: string
@@ -124,6 +128,61 @@ export default function AdminPPDBPage() {
       toast.error("Gagal menghapus data")
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleExportCsv = () => {
+    try {
+      if (filteredApplicants.length === 0) {
+        toast.error("Tidak ada data pendaftar untuk diekspor")
+        return
+      }
+
+      const columnsToExport = [
+        { key: "_index", label: "No" },
+        { key: "registrationNo", label: "Nomor Registrasi" },
+        {
+          key: "createdAt",
+          label: "Tanggal Pendaftaran",
+          format: (val: string) =>
+            new Date(val).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+        },
+        { key: "fullName", label: "Nama Lengkap" },
+        { key: "nik", label: "NIK", format: (val: string) => `'${val}` },
+        { key: "nisn", label: "NISN", format: (val: string) => `'${val}` },
+        { key: "previousSchool", label: "Asal Sekolah" },
+        {
+          key: "major",
+          label: "Pilihan Jurusan",
+          format: (val: any) => (val ? `${val.name} (${val.code})` : "-"),
+        },
+        { key: "phone", label: "No. HP / WA", format: (val: string) => `'${val}` },
+        { key: "email", label: "Alamat Email" },
+        {
+          key: "status",
+          label: "Status Seleksi",
+          format: (val: string) => {
+            const map: Record<string, string> = {
+              PENDING: "Menunggu Verifikasi",
+              VERIFIED: "Terverifikasi",
+              ACCEPTED: "Diterima",
+              REJECTED: "Ditolak",
+            }
+            return map[val] || val
+          },
+        },
+        { key: "notes", label: "Catatan Verifikator", format: (val: string) => val || "-" },
+      ]
+
+      const dateStr = new Date().toISOString().split("T")[0]
+      exportToCsv(`data-pendaftar-ppdb-${dateStr}`, columnsToExport, filteredApplicants)
+      toast.success(`Berhasil mengekspor ${filteredApplicants.length} data pendaftar ke CSV/Excel!`)
+    } catch {
+      toast.error("Gagal mengekspor data")
     }
   }
 
@@ -227,6 +286,17 @@ export default function AdminPPDBPage() {
             Kelola berkas calon siswa baru, validasi dokumen, dan tentukan hasil seleksi.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExportCsv}
+            variant="outline"
+            size="sm"
+            className="rounded-xl font-semibold gap-1.5 border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-2xs"
+          >
+            <Download className="h-4 w-4" />
+            Export Excel / CSV
+          </Button>
+        </div>
       </div>
 
       {/* Reusable Data Table with Status Filter */}
@@ -254,6 +324,17 @@ export default function AdminPPDBPage() {
         }
         actions={(a) => (
           <div className="flex items-center justify-end gap-1">
+            <Button
+              asChild
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10"
+              title="Cetak Bukti Pendaftaran (PDF)"
+            >
+              <Link href={`/ppdb/bukti/${a.registrationNo}`} target="_blank">
+                <Printer className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -342,8 +423,23 @@ export default function AdminPPDBPage() {
                     {selectedApplicant.phone} • {selectedApplicant.email}
                   </span>
                 </div>
-                {selectedApplicant.documentUrl && (
-                  <div className="pt-2 border-t flex justify-end">
+                <div className="pt-2 border-t flex flex-wrap items-center justify-between gap-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7 gap-1 font-semibold text-primary hover:text-primary"
+                  >
+                    <Link
+                      href={`/ppdb/bukti/${selectedApplicant.registrationNo}`}
+                      target="_blank"
+                    >
+                      <Printer className="h-3 w-3" />
+                      Cetak Bukti Pendaftaran (PDF)
+                    </Link>
+                  </Button>
+
+                  {selectedApplicant.documentUrl && (
                     <Button
                       asChild
                       variant="outline"
@@ -359,8 +455,8 @@ export default function AdminPPDBPage() {
                         Buka Dokumen Unggahan
                       </a>
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1.5">

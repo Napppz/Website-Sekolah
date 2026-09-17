@@ -159,3 +159,49 @@ export async function deletePPDB(id: string) {
     return { success: false, error: "Gagal menghapus data pendaftar" }
   }
 }
+
+export async function checkPPDBStatus(query: string) {
+  try {
+    const trimmed = query.trim()
+    if (!trimmed) {
+      return { success: false, error: "Masukkan nomor pendaftaran atau NISN" }
+    }
+
+    const applicant = await prisma.pPDBRegistration.findFirst({
+      where: {
+        OR: [
+          { registrationNo: { equals: trimmed, mode: "insensitive" } },
+          { nisn: { equals: trimmed } },
+        ],
+      },
+      include: {
+        major: { select: { name: true, code: true } },
+      },
+    })
+
+    if (!applicant) {
+      return {
+        success: false,
+        error: "Data pendaftaran tidak ditemukan. Pastikan nomor registrasi (contoh: PPDB-2026-xxxx) atau NISN sudah benar.",
+      }
+    }
+
+    return {
+      success: true,
+      applicant: {
+        id: applicant.id,
+        registrationNo: applicant.registrationNo,
+        fullName: applicant.fullName,
+        nisn: applicant.nisn,
+        previousSchool: applicant.previousSchool,
+        major: applicant.major,
+        status: applicant.status,
+        notes: applicant.notes,
+        createdAt: applicant.createdAt.toISOString(),
+      },
+    }
+  } catch (error) {
+    console.error("Check PPDB status error:", error)
+    return { success: false, error: "Terjadi kesalahan saat memeriksa status pendaftaran" }
+  }
+}

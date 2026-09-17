@@ -15,6 +15,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
+  Printer,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -187,10 +188,18 @@ export default function PPDBDaftarPage() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
-              <Button asChild onClick={() => setSuccessRegNo(null)}>
-                <Link href="/">Kembali ke Beranda</Link>
+              <Button asChild size="lg" className="rounded-xl font-bold gap-2 shadow-md bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href={`/ppdb/bukti/${successRegNo}`} target="_blank">
+                  <Printer className="h-4 w-4" />
+                  Cetak Kartu Bukti Pendaftaran (PDF)
+                </Link>
               </Button>
-              <Button variant="outline" onClick={() => setSuccessRegNo(null)}>
+              <Button asChild variant="outline" size="lg" className="rounded-xl font-semibold">
+                <Link href={`/ppdb/status?no=${successRegNo}`}>
+                  Cek Status Pendaftaran
+                </Link>
+              </Button>
+              <Button variant="ghost" size="lg" className="rounded-xl font-medium" onClick={() => setSuccessRegNo(null)}>
                 Daftarkan Siswa Lain
               </Button>
             </div>

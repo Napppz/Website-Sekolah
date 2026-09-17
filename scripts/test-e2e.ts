@@ -210,6 +210,20 @@ async function runTests() {
       })
       assert(acceptedPPDB.status === "ACCEPTED", "Lifecycle PPDB: Status berhasil diubah ke ACCEPTED")
 
+      // Test Query Cetak Kartu Bukti Pendaftaran (Relasi Major & Field Lengkap)
+      const printData = await prisma.pPDBRegistration.findFirst({
+        where: { registrationNo: newPPDB.registrationNo },
+        include: { major: true },
+      })
+      assert(printData !== null, `Cetak Bukti: Data kartu pendaftaran ditemukan berdasarkan registrationNo (${printData?.registrationNo})`)
+      assert(printData?.major?.code === "RPL", "Cetak Bukti: Relasi jurusan RPL terhubung dengan benar")
+
+      // Test Pengecekan Status Mandiri (checkPPDBStatus)
+      const { checkPPDBStatus } = await import("../src/actions/ppdb")
+      const statusCheckResult = await checkPPDBStatus(newPPDB.registrationNo)
+      assert(statusCheckResult.success === true, "Cek Status: checkPPDBStatus berhasil menemukan data pendaftar")
+      assert(statusCheckResult.applicant?.status === "ACCEPTED", "Cek Status: Status pendaftar sesuai dengan hasil seleksi (ACCEPTED)")
+
       // Cleanup
       await prisma.pPDBRegistration.delete({ where: { id: newPPDB.id } })
       const verifyPPDBDeleted = await prisma.pPDBRegistration.findUnique({ where: { id: newPPDB.id } })

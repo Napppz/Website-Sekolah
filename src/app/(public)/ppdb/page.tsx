@@ -80,12 +80,20 @@ export default function PPDBPage() {
         subtitle="Selamat datang calon talenta masa depan. Daftarkan diri Anda dan raih karir digital impian bersama SMKN 1 Digital Nusantara."
         breadcrumb={[{ label: "PPDB", href: "/ppdb" }, { label: "Informasi" }]}
       >
-        <Button asChild size="lg" className="rounded-xl font-bold gap-2">
-          <Link href="/ppdb/daftar">
-            <UserPlus className="h-4 w-4" />
-            Daftar Sekarang Online
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button asChild size="lg" className="rounded-xl font-bold gap-2">
+            <Link href="/ppdb/daftar">
+              <UserPlus className="h-4 w-4" />
+              Daftar Sekarang Online
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="rounded-xl font-semibold gap-2">
+            <Link href="/ppdb/status">
+              <FileText className="h-4 w-4 text-primary" />
+              Cek Status & Cetak Bukti
+            </Link>
+          </Button>
+        </div>
       </PageHeader>
 
       <div className="container mx-auto px-4 md:px-8 space-y-16">
