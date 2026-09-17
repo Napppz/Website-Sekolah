@@ -98,6 +98,9 @@ export async function registerPPDB(formData: FormData) {
 
     try {
       revalidatePath("/admin/ppdb")
+      revalidatePath("/admin")
+      revalidatePath("/ppdb")
+      revalidatePath("/ppdb/status")
     } catch {
       // safe in non-HTTP contexts
     }
@@ -124,7 +127,12 @@ export async function updatePPDBStatus(id: string, status: string, notes?: strin
         notes: notes || undefined,
       },
     })
-    revalidatePath("/admin/ppdb")
+    try {
+      revalidatePath("/admin/ppdb")
+      revalidatePath("/admin")
+      revalidatePath("/ppdb")
+      revalidatePath("/ppdb/status")
+    } catch {}
     return { success: true }
   } catch {
     return { success: false, error: "Gagal memperbarui status pendaftar" }
@@ -140,7 +148,12 @@ export async function deletePPDB(id: string) {
     await prisma.pPDBRegistration.delete({
       where: { id },
     })
-    revalidatePath("/admin/ppdb")
+    try {
+      revalidatePath("/admin/ppdb")
+      revalidatePath("/admin")
+      revalidatePath("/ppdb")
+      revalidatePath("/ppdb/status")
+    } catch {}
     return { success: true }
   } catch {
     return { success: false, error: "Gagal menghapus data pendaftar" }

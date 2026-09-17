@@ -58,10 +58,12 @@ export default function AdminPPDBPage() {
   const loadApplicants = React.useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/ppdb")
+      const res = await fetch("/api/ppdb", { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
-        setApplicants(data.registrations || [])
+        setApplicants(data.applicants || data.registrations || [])
+      } else {
+        toast.error("Gagal memuat data PPDB")
       }
     } catch {
       toast.error("Gagal memuat data PPDB")
