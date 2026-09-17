@@ -28,22 +28,50 @@ export class LocalStorageProvider implements StorageProvider {
     }
   }
 
+  private static ALLOWED_FOLDERS = [
+    "general",
+    "ppdb",
+    "news",
+    "teachers",
+    "students",
+    "facilities",
+    "gallery",
+    "documents",
+  ]
+  private static ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf"]
+
   async upload(file: File, folder = "general"): Promise<UploadResult> {
     await this.ensureDir()
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Sanitize filename
-    const ext = path.extname(file.name) || ".jpg"
+    // Sanitize folder (must match allowlist, fallback to 'general')
+    const sanitizedFolder = LocalStorageProvider.ALLOWED_FOLDERS.includes(folder.toLowerCase())
+      ? folder.toLowerCase()
+      : "general"
+
+    // Sanitize and validate file extension against strict allowlist
+    const rawExt = path.extname(file.name).toLowerCase() || ".jpg"
+    if (!LocalStorageProvider.ALLOWED_EXTENSIONS.includes(rawExt)) {
+      throw new Error("Ekstensi berkas tidak diizinkan")
+    }
+
     const baseName = path
-      .basename(file.name, ext)
+      .basename(file.name, rawExt)
       .replace(/[^a-zA-Z0-9_-]/g, "")
       .toLowerCase()
-      .slice(0, 30)
+      .slice(0, 30) || "file"
 
-    const uniqueName = `${folder}_${Date.now()}_${baseName}${ext}`
-    const filePath = path.join(this.uploadDir, uniqueName)
+    // Generate random hex to avoid predictability
+    const randomHex = Math.random().toString(36).substring(2, 8)
+    const uniqueName = `${sanitizedFolder}_${Date.now()}_${randomHex}_${baseName}${rawExt}`
+    const filePath = path.resolve(this.uploadDir, uniqueName)
+
+    // Anti-path traversal guard
+    if (!filePath.startsWith(path.resolve(this.uploadDir))) {
+      throw new Error("Akses direktori tidak sah (Path Traversal)")
+    }
 
     await fs.writeFile(filePath, buffer)
 
@@ -57,8 +85,14 @@ export class LocalStorageProvider implements StorageProvider {
 
   async delete(url: string): Promise<boolean> {
     try {
-      const filename = path.basename(url)
-      const filePath = path.join(this.uploadDir, filename)
+      const filename = path.basename(url).replace(/[^a-zA-Z0-9_.-]/g, "")
+      const filePath = path.resolve(this.uploadDir, filename)
+
+      // Anti-path traversal guard
+      if (!filePath.startsWith(path.resolve(this.uploadDir))) {
+        return false
+      }
+
       await fs.unlink(filePath)
       return true
     } catch {

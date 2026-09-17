@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 export const dynamic = "force-dynamic"
 
 export async function GET(request: Request) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "Unauthorized: Hanya admin yang dapat mengakses notifikasi" },
+      { status: 401 }
+    )
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get("limit") || "20", 10)
@@ -23,6 +32,14 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json(
+      { error: "Unauthorized: Hanya admin yang dapat mengubah status notifikasi" },
+      { status: 401 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { action, id } = body

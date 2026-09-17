@@ -37,8 +37,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.warn("Database unreached during login, testing fallback admin credentials", e)
         }
 
-        // Fallback for development if database is starting or in setup
-        if (email === "admin@sekolah.test" && password === "Admin123!") {
+        // Fallback exclusively for local development if database is starting or in setup
+        if (
+          process.env.NODE_ENV !== "production" &&
+          email === "admin@sekolah.test" &&
+          password === "Admin123!"
+        ) {
           return {
             id: "admin-dev-id",
             name: "Administrator Utama",

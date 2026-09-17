@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import crypto from "crypto"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import { createNotification } from "@/actions/notifications"
@@ -40,9 +41,14 @@ export async function registerPPDB(formData: FormData) {
 
     const validated = PPDBRegisterSchema.parse(rawData)
 
-    // Generate unique registration number
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000)
-    const registrationNo = `PPDB-2026-${randomSuffix}`
+    // Generate secure unpredictable registration number (entropy > 1 billion to prevent scraping)
+    const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    const bytes = crypto.randomBytes(6)
+    let randomCode = ""
+    for (let i = 0; i < 6; i++) {
+      randomCode += charset[bytes[i] % charset.length]
+    }
+    const registrationNo = `PPDB-2026-${randomCode}`
 
     // Resolve majorId safely to existing record in PostgreSQL
     let targetMajorId = validated.majorId

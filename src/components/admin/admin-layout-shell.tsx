@@ -100,6 +100,17 @@ export function AdminLayoutShell({ children, user }: AdminLayoutShellProps) {
     return <>{children}</>
   }
 
+  // Prevent rendering admin panel chrome or content if unauthenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-3">
+          <p className="text-sm font-semibold text-muted-foreground">Memeriksa sesi administrator...</p>
+        </div>
+      </div>
+    )
+  }
+
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin"
     return pathname.startsWith(href)
