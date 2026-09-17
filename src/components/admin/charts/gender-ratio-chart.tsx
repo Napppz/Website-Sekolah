@@ -55,28 +55,30 @@ export function GenderRatioChart({ data }: GenderRatioChartProps) {
       {/* Bar Chart */}
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }} barGap={12}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.6} vertical={false} />
           <XAxis
             dataKey="gender"
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
+              backgroundColor: "var(--card)",
+              borderColor: "var(--border)",
               borderRadius: "12px",
               fontSize: "12px",
               fontWeight: 600,
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
             }}
+            labelStyle={{ color: "var(--foreground)" }}
+            itemStyle={{ color: "var(--foreground)" }}
             formatter={(value: any) => [`${value.toLocaleString("id-ID")} siswa`, "Jumlah"]}
           />
           <Bar dataKey="count" radius={[8, 8, 0, 0]} maxBarSize={60}>

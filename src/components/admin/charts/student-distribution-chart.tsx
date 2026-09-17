@@ -59,7 +59,7 @@ export function StudentDistributionChart({ data }: StudentDistributionChartProps
           fill="#8884d8"
           dataKey="value"
           strokeWidth={2}
-          stroke="hsl(var(--background))"
+          stroke="var(--card)"
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -67,13 +67,15 @@ export function StudentDistributionChart({ data }: StudentDistributionChartProps
         </Pie>
         <Tooltip
           contentStyle={{
-            backgroundColor: "hsl(var(--card))",
-            border: "1px solid hsl(var(--border))",
+            backgroundColor: "var(--card)",
+            borderColor: "var(--border)",
             borderRadius: "12px",
             fontSize: "12px",
             fontWeight: 600,
-            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
           }}
+          labelStyle={{ color: "var(--foreground)" }}
+          itemStyle={{ color: "var(--foreground)" }}
           formatter={(value: any, _name: any, props: any) => [
             `${value} siswa`,
             props.payload.fullName,
@@ -84,7 +86,7 @@ export function StudentDistributionChart({ data }: StudentDistributionChartProps
           iconSize={8}
           wrapperStyle={{ fontSize: "11px", fontWeight: 600 }}
           formatter={(value: string, entry: any) => (
-            <span style={{ color: "hsl(var(--foreground))" }}>
+            <span style={{ color: "var(--foreground)" }}>
               {entry.payload?.fullName || value}
             </span>
           )}

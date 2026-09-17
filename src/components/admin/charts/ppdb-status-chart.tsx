@@ -29,7 +29,7 @@ export function PPDBStatusChart({ data }: PPDBStatusChartProps) {
             fill="#8884d8"
             dataKey="value"
             strokeWidth={2}
-            stroke="hsl(var(--background))"
+            stroke="var(--card)"
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -37,13 +37,15 @@ export function PPDBStatusChart({ data }: PPDBStatusChartProps) {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
+              backgroundColor: "var(--card)",
+              borderColor: "var(--border)",
               borderRadius: "12px",
               fontSize: "12px",
               fontWeight: 600,
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
             }}
+            labelStyle={{ color: "var(--foreground)" }}
+            itemStyle={{ color: "var(--foreground)" }}
             formatter={(value: any, name: any) => [`${value} pendaftar`, name]}
           />
         </PieChart>
