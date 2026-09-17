@@ -1,15 +1,17 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import { Search, Calendar, Eye, User, Newspaper, ChevronRight } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { Search, Newspaper, ChevronLeft, ChevronRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/common/page-header"
+import { EmptyState } from "@/components/common/empty-state"
+import { NewsCard } from "@/components/public/news-card"
 import { getNews } from "@/lib/data"
 
 export const metadata: Metadata = {
   title: "Warta & Berita Terkini",
-  description: "Kumpulan artikel, pengumuman liputan kegiatan, dan kabar prestasi terbaru civitas akademika SMK Negeri 1 Digital Nusantara.",
+  description:
+    "Kumpulan artikel, liputan kegiatan, dan kabar prestasi terbaru civitas akademika SMK Negeri 1 Digital Nusantara.",
 }
 
 const CATEGORIES = [
@@ -34,159 +36,134 @@ export default async function BeritaPage({
   const { news, total, totalPages } = await getNews(query, categorySlug, page, 9)
 
   return (
-    <div className="container mx-auto px-4 md:px-8 py-12 md:py-16 space-y-12">
-      {/* Header */}
-      <div className="text-center max-w-2xl mx-auto space-y-3">
-        <Badge variant="outline" className="px-3.5 py-1 text-xs">
-          Warta & Publikasi
-        </Badge>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-          Kabar & Berita Terkini
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Ikuti perkembangan informasi terbaru seputar prestasi, inovasi teknologi, dan ragam kegiatan sekolah.
-        </p>
-      </div>
-
-      {/* Search & Filter */}
-      <div className="space-y-4 max-w-3xl mx-auto">
-        <form method="GET" className="relative flex items-center">
-          <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            type="text"
-            name="q"
-            defaultValue={query}
-            placeholder="Cari judul berita atau topik kegiatan..."
-            className="pl-10 pr-24 rounded-full h-11"
-          />
-          <Button type="submit" size="sm" className="absolute right-1.5 rounded-full px-4">
-            Cari
-          </Button>
-        </form>
-
-        {/* Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 pt-2">
-          {CATEGORIES.map((c) => (
-            <Button
-              key={c.slug}
-              asChild
-              size="sm"
-              variant={categorySlug === c.slug ? "default" : "outline"}
-              className="rounded-full text-xs"
-            >
-              <Link
-                href={
-                  c.slug === "ALL"
-                    ? `/berita${query ? `?q=${query}` : ""}`
-                    : `/berita?kategori=${c.slug}${query ? `&q=${query}` : ""}`
-                }
-              >
-                {c.label}
-              </Link>
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* News Grid */}
-      {news.length === 0 ? (
-        <div className="text-center py-16 space-y-3 border rounded-2xl bg-muted/20 max-w-md mx-auto">
-          <Newspaper className="h-12 w-12 mx-auto text-muted-foreground/50" />
-          <h3 className="text-lg font-semibold">Tidak Ada Berita</h3>
-          <p className="text-sm text-muted-foreground">
-            Tidak ditemukan artikel berita yang sesuai dengan filter atau kata kunci Anda.
+    <div className="flex flex-col gap-10 md:gap-14 pb-20">
+      <PageHeader
+        badge="Warta & Publikasi"
+        title="Kabar & Berita Terkini"
+        subtitle="Ikuti perkembangan informasi terbaru seputar prestasi, inovasi teknologi, dan ragam kegiatan sekolah."
+        breadcrumb={[
+          { label: "Informasi", href: "/berita" },
+          { label: "Berita Terkini" },
+        ]}
+      >
+        <div className="text-right">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Total Artikel
           </p>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/berita">Reset Filter</Link>
-          </Button>
+          <p className="text-2xl sm:text-3xl font-black text-foreground">
+            {total} <span className="text-sm font-medium text-muted-foreground">Berita</span>
+          </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {news.map((item) => (
-            <Card
-              key={item.id}
-              className="overflow-hidden rounded-2xl border bg-card hover:border-primary/50 transition-all hover:shadow-lg flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
-                  <img
-                    src={item.thumbnail || "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=800"}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <Badge variant="secondary" className="bg-background/90 text-foreground text-[10px] font-semibold backdrop-blur-xs">
-                      {item.category?.name || "Umum"}
-                    </Badge>
-                  </div>
-                </div>
+      </PageHeader>
 
-                <div className="p-6 space-y-3">
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(item.publishedAt).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3.5 w-3.5" />
-                      {item.views} views
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-lg leading-snug text-foreground hover:text-primary transition-colors">
-                    <Link href={`/berita/${item.slug}`}>{item.title}</Link>
-                  </h3>
-
-                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                    {item.excerpt || item.content.slice(0, 120)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-6 pt-0 border-t mt-4 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                  {item.author?.name || "Admin Sekolah"}
-                </span>
-                <Link
-                  href={`/berita/${item.slug}`}
-                  className="text-xs font-semibold text-primary inline-flex items-center gap-1 hover:underline"
-                >
-                  Selengkapnya
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 pt-6">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+      <div className="container mx-auto px-4 md:px-8 space-y-8">
+        {/* Search & Category Filter Pills */}
+        <div className="space-y-4 max-w-4xl mx-auto">
+          <form method="GET" className="relative flex items-center">
+            <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              name="q"
+              defaultValue={query}
+              placeholder="Cari judul berita atau topik kegiatan..."
+              className="pl-10 pr-24 rounded-xl h-11 bg-card border text-sm"
+            />
+            {categorySlug !== "ALL" && (
+              <input type="hidden" name="kategori" value={categorySlug} />
+            )}
             <Button
-              key={p}
-              asChild
+              type="submit"
               size="sm"
-              variant={p === page ? "default" : "outline"}
-              className="h-9 w-9 p-0"
+              className="absolute right-1.5 rounded-lg px-4 h-8 font-semibold"
+            >
+              Cari
+            </Button>
+          </form>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {CATEGORIES.map((cat) => (
+              <Button
+                key={cat.slug}
+                asChild
+                size="sm"
+                variant={categorySlug === cat.slug ? "default" : "outline"}
+                className="rounded-xl text-xs font-semibold"
+              >
+                <Link
+                  href={
+                    cat.slug === "ALL"
+                      ? `/berita${query ? `?q=${query}` : ""}`
+                      : `/berita?kategori=${cat.slug}${query ? `&q=${query}` : ""}`
+                  }
+                >
+                  {cat.label}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* News Grid */}
+        {news.length === 0 ? (
+          <EmptyState
+            icon={Newspaper}
+            title="Berita Tidak Ditemukan"
+            description={`Tidak ada artikel berita yang cocok dengan kriteria pencarian Anda.`}
+            action={
+              <Button asChild variant="outline" size="sm" className="rounded-xl">
+                <Link href="/berita">Reset Pencarian</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {news.map((item) => (
+              <NewsCard key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-6">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              className="rounded-xl"
             >
               <Link
-                href={`/berita?page=${p}${query ? `&q=${query}` : ""}${
-                  categorySlug !== "ALL" ? `&kategori=${categorySlug}` : ""
-                }`}
+                href={`/berita?q=${query}&kategori=${categorySlug}&page=${Math.max(
+                  1,
+                  page - 1
+                )}`}
               >
-                {p}
+                <ChevronLeft className="h-4 w-4 mr-1" /> Sebelumnya
               </Link>
             </Button>
-          ))}
-        </div>
-      )}
+            <span className="text-xs font-semibold text-muted-foreground px-3">
+              Halaman {page} dari {totalPages}
+            </span>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              className="rounded-xl"
+            >
+              <Link
+                href={`/berita?q=${query}&kategori=${categorySlug}&page=${Math.min(
+                  totalPages,
+                  page + 1
+                )}`}
+              >
+                Berikutnya <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

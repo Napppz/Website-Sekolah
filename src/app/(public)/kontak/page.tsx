@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { PageHeader } from "@/components/common/page-header"
 import { sendContactMessage } from "@/actions/contact"
 
 const ContactFormSchema = z.object({
@@ -69,19 +70,15 @@ export default function KontakPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-8 py-12 md:py-16 space-y-16">
-      {/* Header */}
-      <div className="text-center max-w-2xl mx-auto space-y-3">
-        <Badge variant="outline" className="px-3.5 py-1 text-xs">
-          Hubungi Kami
-        </Badge>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-          Kontak & Informasi Layanan
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Punya pertanyaan seputar program pendidikan, kemitraan industri, atau PPDB? Tim kami siap membantu Anda.
-        </p>
-      </div>
+    <div className="flex flex-col gap-10 md:gap-14 pb-20">
+      <PageHeader
+        badge="Hubungi Kami"
+        title="Kontak & Informasi Layanan"
+        subtitle="Punya pertanyaan seputar program pendidikan, kemitraan industri, atau PPDB? Tim kami siap membantu Anda."
+        breadcrumb={[{ label: "Kontak" }]}
+      />
+
+      <div className="container mx-auto px-4 md:px-8 space-y-16">
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Contact Info (5 cols) */}
@@ -276,6 +273,7 @@ export default function KontakPage() {
           </Card>
         </div>
       </div>
+    </div>
     </div>
   )
 }

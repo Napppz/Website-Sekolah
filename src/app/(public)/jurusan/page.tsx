@@ -1,81 +1,88 @@
 import { Metadata } from "next"
 import Link from "next/link"
+import Image from "next/image"
 import {
-  GraduationCap,
-  Sparkles,
   CheckCircle2,
   Briefcase,
   Layers,
   ArrowRight,
+  UserPlus,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/common/page-header"
 import { getMajors } from "@/lib/data"
 
 export const metadata: Metadata = {
   title: "Program Keahlian & Jurusan Unggulan",
-  description: "Daftar 5 program keahlian vokasi unggulan: RPL, TJKT, DKV, MPLB, dan AKL beserta kompetensi dan prospek karir kerja.",
+  description:
+    "Daftar 5 program keahlian vokasi unggulan: RPL, TJKT, DKV, MPLB, dan AKL beserta silabus kompetensi dan prospek karir alumni.",
 }
 
 export default async function JurusanPage() {
   const majors = await getMajors()
 
   return (
-    <div className="container mx-auto px-4 md:px-8 py-12 md:py-16 space-y-16">
-      {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <Badge variant="outline" className="px-3.5 py-1 text-xs">
-          Konsentrasi Keahlian
-        </Badge>
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">
-          Program Keahlian & Jurusan
-        </h1>
-        <p className="text-base text-muted-foreground leading-relaxed">
-          Kurikulum berbasis industri yang dirancang secara terintegrasi untuk mencetak tenaga profesional siap kerja, melanjutkan kuliah, maupun berwirausaha digital.
-        </p>
-      </div>
+    <div className="flex flex-col gap-12 md:gap-16 pb-20">
+      <PageHeader
+        badge="Konsentrasi Keahlian"
+        title="Program Keahlian & Jurusan"
+        subtitle="Kurikulum berbasis industri yang dirancang terintegrasi untuk mencetak talenta profesional siap kerja, melanjutkan studi, maupun berwirausaha digital."
+        breadcrumb={[
+          { label: "Akademik", href: "/jurusan" },
+          { label: "Program Keahlian" },
+        ]}
+      />
 
-      {/* Majors Detailed List */}
-      <div className="space-y-12">
+      <div className="container mx-auto px-4 md:px-8 space-y-12">
         {majors.map((major, index) => {
           const isReversed = index % 2 === 1
           return (
             <Card
               key={major.id}
-              className="overflow-hidden rounded-3xl border bg-card/60 backdrop-blur-xs shadow-sm"
+              id={major.code.toLowerCase()}
+              className="overflow-hidden rounded-3xl border bg-card shadow-2xs"
             >
               <div
                 className={`grid grid-cols-1 lg:grid-cols-12 gap-8 items-center ${
                   isReversed ? "lg:flex-row-reverse" : ""
                 }`}
               >
-                {/* Visual Image */}
+                {/* Visual Image (5 cols) */}
                 <div
                   className={`lg:col-span-5 relative aspect-[16/10] w-full overflow-hidden bg-muted ${
                     isReversed ? "lg:order-2" : "lg:order-1"
                   }`}
                 >
-                  <img
-                    src={major.image || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800"}
+                  <Image
+                    src={
+                      major.image ||
+                      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800"
+                    }
                     alt={major.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 40vw"
                   />
                   <div className="absolute top-4 left-4">
-                    <Badge className="bg-primary text-primary-foreground font-bold px-3 py-1 shadow-md">
+                    <Badge className="bg-primary text-primary-foreground font-black text-xs px-3 py-1 rounded-md shadow-xs">
                       {major.code}
                     </Badge>
                   </div>
                 </div>
 
-                {/* Content */}
+                {/* Content Details (7 cols) */}
                 <div
-                  className={`lg:col-span-7 p-6 md:p-8 lg:p-10 space-y-6 ${
+                  className={`lg:col-span-7 p-6 sm:p-8 lg:p-10 space-y-6 ${
                     isReversed ? "lg:order-1" : "lg:order-2"
                   }`}
                 >
                   <div className="space-y-2">
-                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                      Program Unggulan 3 Tahun
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
                       {major.name}
                     </h2>
                     <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -83,37 +90,39 @@ export default async function JurusanPage() {
                     </p>
                   </div>
 
-                  {/* Competencies */}
-                  <div className="space-y-2.5">
-                    <h4 className="flex items-center gap-2 font-bold text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                  {/* Silabus Kompetensi */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-primary" />
                       Kompetensi Keahlian yang Dipelajari:
-                    </h4>
-                    <p className="text-sm text-muted-foreground bg-muted/30 p-3.5 rounded-xl border leading-relaxed">
-                      {major.competencies}
-                    </p>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-muted-foreground">
+                      {major.competencies.split(",").map((c, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <span>{c.trim()}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Career Prospects */}
-                  <div className="space-y-2.5">
-                    <h4 className="flex items-center gap-2 font-bold text-sm text-foreground">
-                      <Briefcase className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      Prospek Karir & Lapangan Pekerjaan:
-                    </h4>
-                    <p className="text-sm text-muted-foreground bg-muted/30 p-3.5 rounded-xl border leading-relaxed">
+                  {/* Prospek Karir Kerja */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-primary" />
+                      Peluang Karir Lulusan:
+                    </h3>
+                    <p className="text-xs sm:text-sm font-medium text-foreground">
                       {major.careerProspects}
                     </p>
                   </div>
 
-                  <div className="pt-2 flex items-center gap-3">
-                    <Button asChild size="sm">
-                      <Link href={`/ppdb/daftar`} className="flex items-center gap-1.5">
-                        Daftar Jurusan {major.code}
-                        <ArrowRight className="h-4 w-4" />
+                  <div className="pt-2">
+                    <Button asChild className="rounded-xl font-semibold gap-2">
+                      <Link href="/ppdb/daftar">
+                        <UserPlus className="h-4 w-4" />
+                        Pilih Jurusan Ini di PPDB
                       </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/fasilitas">Lihat Fasilitas Lab</Link>
                     </Button>
                   </div>
                 </div>

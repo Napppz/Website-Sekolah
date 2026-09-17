@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { PageHeader } from "@/components/common/page-header"
 import { registerPPDB } from "@/actions/ppdb"
 
 const PPDBFormSchema = z.object({
@@ -122,14 +123,19 @@ export default function PPDBDaftarPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-8 py-12 md:py-16">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground">
-          <Link href="/ppdb" className="flex items-center gap-1.5">
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Informasi PPDB
-          </Link>
-        </Button>
+    <div className="flex flex-col gap-10 md:gap-14 pb-20">
+      <PageHeader
+        badge="Formulir Pendaftaran"
+        title="Pendaftaran Siswa Baru (PPDB Online)"
+        subtitle="Lengkapi data diri calon peserta didik secara akurat sesuai kartu keluarga dan dokumen resmi rapor."
+        breadcrumb={[
+          { label: "PPDB", href: "/ppdb" },
+          { label: "Formulir Pendaftaran" },
+        ]}
+      />
+
+      <div className="container mx-auto px-4 md:px-8">
+        <div className="max-w-3xl mx-auto space-y-8">
 
         {/* Success Confirmation Card */}
         {successRegNo ? (
@@ -446,6 +452,7 @@ export default function PPDBDaftarPage() {
           </Card>
         )}
       </div>
+    </div>
     </div>
   )
 }

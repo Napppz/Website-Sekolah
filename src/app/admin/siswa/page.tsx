@@ -5,30 +5,21 @@ import { toast } from "sonner"
 import {
   GraduationCap,
   Plus,
-  Search,
   Pencil,
   Trash2,
   Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { DataTable, Column } from "@/components/common/data-table"
+import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { createStudent, updateStudent, deleteStudent } from "@/actions/students"
 
 interface StudentData {
@@ -45,69 +36,43 @@ interface StudentData {
 
 export default function AdminSiswaPage() {
   const [students, setStudents] = React.useState<StudentData[]>([])
-  const [search, setSearch] = React.useState("")
+  const [isLoading, setIsLoading] = React.useState(true)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingStudent, setEditingStudent] = React.useState<StudentData | null>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
+  // Confirm delete state
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
   const loadStudents = React.useCallback(async () => {
+    setIsLoading(true)
     try {
-      const res = await fetch(`/api/students?q=${search}`)
+      const res = await fetch("/api/students")
       if (res.ok) {
         const data = await res.json()
         setStudents(data.students || [])
       }
     } catch {
-      setStudents([
-        {
-          id: "s-1",
-          nisn: "0089123456",
-          nis: "20241001",
-          name: "Muhammad Rizky Pratama",
-          gender: "L",
-          classGrade: "XII",
-          majorId: "major-1",
-          major: { name: "Rekayasa Perangkat Lunak", code: "RPL" },
-          status: "ACTIVE",
-        },
-        {
-          id: "s-2",
-          nisn: "0091234567",
-          nis: "20241002",
-          name: "Annisa Syifa Rahmadani",
-          gender: "P",
-          classGrade: "XI",
-          majorId: "major-3",
-          major: { name: "Desain Komunikasi Visual", code: "DKV" },
-          status: "ACTIVE",
-        },
-      ])
+      toast.error("Gagal memuat data siswa")
+    } finally {
+      setIsLoading(false)
     }
-  }, [search])
+  }, [])
 
   React.useEffect(() => {
     loadStudents()
   }, [loadStudents])
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Hapus data siswa ini?")) {
-      const res = await deleteStudent(id)
-      if (res.success) {
-        toast.success("Siswa berhasil dihapus")
-        setStudents((prev) => prev.filter((s) => s.id !== id))
-      } else {
-        toast.error(res.error || "Gagal menghapus")
-      }
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
 
     try {
       if (editingStudent) {
+        formData.append("id", editingStudent.id)
         const res = await updateStudent(editingStudent.id, formData)
         if (res.success) {
           toast.success("Data siswa berhasil diperbarui!")
@@ -115,7 +80,7 @@ export default function AdminSiswaPage() {
           setEditingStudent(null)
           loadStudents()
         } else {
-          toast.error(res.error || "Gagal memperbarui")
+          toast.error(res.error || "Gagal memperbarui siswa")
         }
       } else {
         const res = await createStudent(formData)
@@ -124,241 +89,325 @@ export default function AdminSiswaPage() {
           setIsDialogOpen(false)
           loadStudents()
         } else {
-          toast.error(res.error || "Gagal menambahkan")
+          toast.error(res.error || "Gagal menambah siswa")
         }
       }
+    } catch {
+      toast.error("Terjadi kesalahan sistem")
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    try {
+      const res = await deleteStudent(deleteId)
+      if (res.success) {
+        toast.success("Data siswa berhasil dihapus!")
+        setDeleteId(null)
+        loadStudents()
+      } else {
+        toast.error(res.error || "Gagal menghapus siswa")
+      }
+    } catch {
+      toast.error("Gagal menghapus siswa")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Table Columns
+  const columns: Column<StudentData>[] = [
+    {
+      key: "name",
+      header: "Nama Siswa",
+      render: (s) => (
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-            Manajemen Data Siswa
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Data nomor induk (NISN & NIS), kelas, gender, dan jurusan siswa.
+          <p className="font-bold text-xs text-foreground leading-snug truncate">
+            {s.name}
+          </p>
+          <p className="text-[10px] text-muted-foreground font-mono">
+            NISN: {s.nisn} • NIS: {s.nis}
           </p>
         </div>
-
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open)
-            if (!open) setEditingStudent(null)
-          }}
+      ),
+    },
+    {
+      key: "classGrade",
+      header: "Kelas",
+      render: (s) => (
+        <span className="font-bold text-xs text-foreground">
+          Kelas {s.classGrade}
+        </span>
+      ),
+    },
+    {
+      key: "major",
+      header: "Jurusan",
+      render: (s) => (
+        <Badge
+          variant="outline"
+          className="text-[10px] font-semibold bg-primary/5 text-primary border-primary/20"
         >
-          <DialogTrigger asChild>
-            <Button size="sm" className="rounded-xl gap-1.5">
-              <Plus className="h-4 w-4" />
-              Tambah Siswa
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingStudent ? "Edit Data Siswa" : "Tambah Siswa Baru"}
-              </DialogTitle>
-            </DialogHeader>
+          {s.major?.code || "RPL"}
+        </Badge>
+      ),
+    },
+    {
+      key: "gender",
+      header: "Gender",
+      render: (s) => (
+        <span className="text-xs text-muted-foreground">
+          {s.gender === "L" ? "Laki-laki" : "Perempuan"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (s) => (
+        <Badge
+          variant="outline"
+          className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
+        >
+          {s.status}
+        </Badge>
+      ),
+    },
+  ]
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+  return (
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+            Manajemen Data Siswa
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Daftar peserta didik aktif, nomor induk siswa, dan kelas rombel.
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setEditingStudent(null)
+            setIsDialogOpen(true)
+          }}
+          size="sm"
+          className="rounded-xl font-semibold gap-1.5 h-9"
+        >
+          <Plus className="h-4 w-4" />
+          Tambah Siswa Baru
+        </Button>
+      </div>
+
+      {/* Reusable Data Table */}
+      <DataTable<StudentData>
+        data={students}
+        columns={columns}
+        keyExtractor={(s) => s.id}
+        searchPlaceholder="Cari nama siswa, NISN, atau NIS..."
+        searchKey={(s) => `${s.name} ${s.nisn} ${s.nis}`}
+        pageSize={10}
+        emptyTitle="Belum Ada Data Siswa"
+        emptyDescription="Mulai daftarkan data siswa aktif untuk keperluan administrasi kesiswaan."
+        emptyAction={
+          <Button
+            onClick={() => {
+              setEditingStudent(null)
+              setIsDialogOpen(true)
+            }}
+            size="sm"
+            className="rounded-xl"
+          >
+            Tambah Siswa
+          </Button>
+        }
+        actions={(s) => (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-lg hover:bg-muted"
+              title="Edit Data"
+              onClick={() => {
+                setEditingStudent(s)
+                setIsDialogOpen(true)
+              }}
+            >
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+              title="Hapus Data"
+              onClick={() => setDeleteId(s.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+        mobileCardRender={(s, actionButtons) => (
+          <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <p className="font-bold text-sm text-foreground">{s.name}</p>
+              <Badge
+                variant="outline"
+                className="text-[10px] bg-primary/5 text-primary border-primary/20"
+              >
+                {s.major?.code || "RPL"}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              NISN: {s.nisn} • Kelas: {s.classGrade}
+            </p>
+            <div className="flex justify-end pt-1 border-t">{actionButtons}</div>
+          </div>
+        )}
+      />
+
+      {/* Form Dialog (Create / Edit) */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-lg rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              {editingStudent ? "Edit Data Siswa" : "Tambah Siswa Baru"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                Nama Lengkap Siswa <span className="text-destructive">*</span>
+              </label>
+              <Input
+                name="name"
+                defaultValue={editingStudent?.name || ""}
+                required
+                placeholder="Nama sesuai ijazah / KK..."
+                className="rounded-xl h-10 text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Nama Lengkap Siswa *</label>
+                <label className="text-xs font-semibold text-foreground">
+                  NISN <span className="text-destructive">*</span>
+                </label>
                 <Input
-                  name="name"
-                  defaultValue={editingStudent?.name || ""}
+                  name="nisn"
+                  defaultValue={editingStudent?.nisn || ""}
                   required
-                  placeholder="Contoh: Raditya Pratama"
-                  className="rounded-xl"
+                  maxLength={10}
+                  placeholder="10 digit NISN..."
+                  className="rounded-xl h-10 text-xs"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">NISN (10 Digit) *</label>
-                  <Input
-                    name="nisn"
-                    maxLength={10}
-                    defaultValue={editingStudent?.nisn || ""}
-                    required
-                    placeholder="00xxxxxxxx"
-                    className="rounded-xl font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">NIS *</label>
-                  <Input
-                    name="nis"
-                    defaultValue={editingStudent?.nis || ""}
-                    required
-                    placeholder="2024xxxx"
-                    className="rounded-xl font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">Jenis Kelamin</label>
-                  <select
-                    name="gender"
-                    defaultValue={editingStudent?.gender || "L"}
-                    className="w-full h-9 rounded-xl border bg-transparent px-2 text-xs"
-                  >
-                    <option value="L">L</option>
-                    <option value="P">P</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">Kelas</label>
-                  <select
-                    name="classGrade"
-                    defaultValue={editingStudent?.classGrade || "X"}
-                    className="w-full h-9 rounded-xl border bg-transparent px-2 text-xs"
-                  >
-                    <option value="X">Kelas X</option>
-                    <option value="XI">Kelas XI</option>
-                    <option value="XII">Kelas XII</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">Status</label>
-                  <select
-                    name="status"
-                    defaultValue={editingStudent?.status || "ACTIVE"}
-                    className="w-full h-9 rounded-xl border bg-transparent px-2 text-xs"
-                  >
-                    <option value="ACTIVE">Aktif</option>
-                    <option value="GRADUATED">Lulus</option>
-                  </select>
-                </div>
-              </div>
-
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Program Keahlian (Jurusan) *</label>
+                <label className="text-xs font-semibold text-foreground">
+                  NIS Sekolah <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  name="nis"
+                  defaultValue={editingStudent?.nis || ""}
+                  required
+                  placeholder="NIS lokal..."
+                  className="rounded-xl h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Gender <span className="text-destructive">*</span>
+                </label>
                 <select
-                  name="majorId"
-                  defaultValue={editingStudent?.majorId || "major-1"}
-                  className="w-full h-9 rounded-xl border bg-transparent px-3 text-xs"
+                  name="gender"
+                  defaultValue={editingStudent?.gender || "L"}
+                  className="w-full h-10 rounded-xl border bg-card px-3 text-xs"
                 >
-                  <option value="major-1">Rekayasa Perangkat Lunak (RPL)</option>
-                  <option value="major-2">Teknik Jaringan Komputer (TJKT)</option>
-                  <option value="major-3">Desain Komunikasi Visual (DKV)</option>
-                  <option value="major-4">Manajemen Perkantoran (MPLB)</option>
-                  <option value="major-5">Akuntansi Keuangan (AKL)</option>
+                  <option value="L">Laki-laki</option>
+                  <option value="P">Perempuan</option>
                 </select>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsDialogOpen(false)}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Tingkat Kelas <span className="text-destructive">*</span>
+                </label>
+                <select
+                  name="classGrade"
+                  defaultValue={editingStudent?.classGrade || "X"}
+                  className="w-full h-10 rounded-xl border bg-card px-3 text-xs"
                 >
-                  Batal
-                </Button>
-                <Button type="submit" size="sm" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : editingStudent ? (
-                    "Simpan"
-                  ) : (
-                    "Tambah"
-                  )}
-                </Button>
+                  <option value="X">Kelas X</option>
+                  <option value="XI">Kelas XI</option>
+                  <option value="XII">Kelas XII</option>
+                </select>
               </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Cari nama atau NISN siswa..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 rounded-xl h-9 text-xs"
-        />
-      </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Jurusan <span className="text-destructive">*</span>
+                </label>
+                <select
+                  name="majorId"
+                  defaultValue={editingStudent?.majorId || "major-1"}
+                  className="w-full h-10 rounded-xl border bg-card px-2 text-xs"
+                >
+                  <option value="major-1">RPL</option>
+                  <option value="major-2">TJKT</option>
+                  <option value="major-3">DKV</option>
+                  <option value="major-4">MPLB</option>
+                  <option value="major-5">AKL</option>
+                </select>
+              </div>
+            </div>
 
-      <Card className="rounded-2xl border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="text-xs">
-              <TableHead>NISN / NIS</TableHead>
-              <TableHead>Nama Siswa</TableHead>
-              <TableHead>L/P</TableHead>
-              <TableHead>Kelas</TableHead>
-              <TableHead>Jurusan</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-xs text-muted-foreground">
-                  Tidak ada data siswa.
-                </TableCell>
-              </TableRow>
-            ) : (
-              students.map((s) => (
-                <TableRow key={s.id} className="text-xs">
-                  <TableCell className="font-mono text-muted-foreground">
-                    {s.nisn} / {s.nis}
-                  </TableCell>
-                  <TableCell className="font-bold text-foreground">{s.name}</TableCell>
-                  <TableCell>{s.gender}</TableCell>
-                  <TableCell>Kelas {s.classGrade}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px]">
-                      {s.major?.code || "RPL"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={s.status === "ACTIVE" ? "secondary" : "outline"}
-                      className="text-[10px] text-emerald-600"
-                    >
-                      {s.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => {
-                          setEditingStudent(s)
-                          setIsDialogOpen(true)
-                        }}
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-destructive"
-                        onClick={() => handleDelete(s.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+            <div className="pt-4 flex justify-end gap-2 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDialogOpen(false)}
+                className="rounded-xl"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting}
+                className="rounded-xl min-w-24 font-semibold"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : editingStudent ? (
+                  "Simpan Perubahan"
+                ) : (
+                  "Tambah Siswa"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteId)}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Hapus Data Siswa?"
+        description="Data siswa ini akan dihapus secara permanen dari basis data kesiswaan sekolah."
+        confirmText="Hapus Siswa"
+        cancelText="Batal"
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

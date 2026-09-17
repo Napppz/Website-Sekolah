@@ -4,35 +4,26 @@ import * as React from "react"
 import { toast } from "sonner"
 import {
   UserCheck,
-  Search,
   CheckCircle,
   XCircle,
   Clock,
-  FileText,
   Trash2,
-  Phone,
-  Mail,
-  Loader2,
+  FileText,
   ExternalLink,
+  Eye,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { DataTable, Column } from "@/components/common/data-table"
+import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { updatePPDBStatus, deletePPDB } from "@/actions/ppdb"
 
 interface PPDBApplicant {
@@ -53,322 +44,391 @@ interface PPDBApplicant {
 
 export default function AdminPPDBPage() {
   const [applicants, setApplicants] = React.useState<PPDBApplicant[]>([])
-  const [search, setSearch] = React.useState("")
+  const [isLoading, setIsLoading] = React.useState(true)
   const [statusFilter, setStatusFilter] = React.useState("ALL")
   const [selectedApplicant, setSelectedApplicant] = React.useState<PPDBApplicant | null>(null)
   const [newStatus, setNewStatus] = React.useState("VERIFIED")
   const [notes, setNotes] = React.useState("")
   const [isUpdating, setIsUpdating] = React.useState(false)
 
-  const loadApplicants = async () => {
+  // Confirm delete state
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const loadApplicants = React.useCallback(async () => {
+    setIsLoading(true)
     try {
       const res = await fetch("/api/ppdb")
       if (res.ok) {
         const data = await res.json()
-        setApplicants(data.applicants || [])
+        setApplicants(data.registrations || [])
       }
     } catch {
-      setApplicants([
-        {
-          id: "p-1",
-          registrationNo: "PPDB-2026-0001",
-          fullName: "Muhammad Rizky Pratama",
-          nik: "3174011505080001",
-          nisn: "0089123456",
-          previousSchool: "SMP Negeri 115 Jakarta",
-          phone: "081298765432",
-          email: "rizky.pratama@gmail.com",
-          major: { name: "Rekayasa Perangkat Lunak", code: "RPL" },
-          status: "VERIFIED",
-          documentUrl: "/uploads/dokumen.pdf",
-          notes: "Berkas lengkap dan nilai rapor rata-rata 88,5.",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "p-2",
-          registrationNo: "PPDB-2026-0002",
-          fullName: "Annisa Syifa Rahmadani",
-          nik: "3174025208090003",
-          nisn: "0091234567",
-          previousSchool: "SMP Negeri 19 Jakarta",
-          phone: "081387654321",
-          email: "annisa.syifa@gmail.com",
-          major: { name: "Desain Komunikasi Visual", code: "DKV" },
-          status: "ACCEPTED",
-          documentUrl: null,
-          notes: "Lolos jalur prestasi desain grafis.",
-          createdAt: new Date().toISOString(),
-        },
-      ])
+      toast.error("Gagal memuat data PPDB")
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [])
 
   React.useEffect(() => {
     loadApplicants()
-  }, [])
+  }, [loadApplicants])
 
-  const handleUpdateStatus = async () => {
+  // Filtered by status
+  const filteredApplicants = React.useMemo(() => {
+    if (statusFilter === "ALL") return applicants
+    return applicants.filter((a) => a.status === statusFilter)
+  }, [applicants, statusFilter])
+
+  const handleUpdateStatus = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!selectedApplicant) return
+
     setIsUpdating(true)
+    const formData = new FormData()
+    formData.append("id", selectedApplicant.id)
+    formData.append("status", newStatus)
+    formData.append("notes", notes)
 
     try {
       const res = await updatePPDBStatus(selectedApplicant.id, newStatus, notes)
       if (res.success) {
-        toast.success("Status pendaftar berhasil diperbarui!")
-        setApplicants((prev) =>
-          prev.map((a) =>
-            a.id === selectedApplicant.id ? { ...a, status: newStatus, notes } : a
-          )
-        )
+        toast.success("Status verifikasi berhasil diperbarui!")
         setSelectedApplicant(null)
+        loadApplicants()
       } else {
-        toast.error(res.error || "Gagal memperbarui status")
+        toast.error(res.error || "Gagal update status")
       }
+    } catch {
+      toast.error("Terjadi kesalahan sistem")
     } finally {
       setIsUpdating(false)
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Hapus data pendaftaran ini?")) {
-      const res = await deletePPDB(id)
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    try {
+      const res = await deletePPDB(deleteId)
       if (res.success) {
-        toast.success("Data berhasil dihapus")
-        setApplicants((prev) => prev.filter((a) => a.id !== id))
+        toast.success("Data pendaftar berhasil dihapus!")
+        setDeleteId(null)
+        loadApplicants()
       } else {
-        toast.error(res.error || "Gagal menghapus")
+        toast.error(res.error || "Gagal menghapus data")
       }
+    } catch {
+      toast.error("Gagal menghapus data")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
-  const filtered = applicants.filter((a) => {
-    const matchSearch =
-      a.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      a.registrationNo.toLowerCase().includes(search.toLowerCase()) ||
-      a.nisn.includes(search)
-    const matchStatus = statusFilter === "ALL" || a.status === statusFilter
-    return matchSearch && matchStatus
-  })
+  const getStatusBadge = (status: string) => {
+    const config: Record<string, { label: string; className: string }> = {
+      PENDING: {
+        label: "Menunggu",
+        className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
+      },
+      VERIFIED: {
+        label: "Terverifikasi",
+        className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
+      },
+      ACCEPTED: {
+        label: "Diterima",
+        className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+      },
+      REJECTED: {
+        label: "Ditolak",
+        className: "bg-destructive/10 text-destructive border-destructive/30",
+      },
+    }
+
+    const item = config[status] || {
+      label: status,
+      className: "bg-muted text-muted-foreground border-border",
+    }
+
+    return (
+      <Badge variant="outline" className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${item.className}`}>
+        {item.label}
+      </Badge>
+    )
+  }
+
+  // Define Table Columns
+  const columns: Column<PPDBApplicant>[] = [
+    {
+      key: "registrationNo",
+      header: "No. Registrasi",
+      render: (a) => (
+        <span className="font-mono text-xs font-bold text-primary">
+          {a.registrationNo}
+        </span>
+      ),
+    },
+    {
+      key: "fullName",
+      header: "Nama Calon Siswa",
+      render: (a) => (
+        <div>
+          <p className="font-bold text-xs text-foreground leading-snug">
+            {a.fullName}
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Asal: {a.previousSchool}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "major",
+      header: "Pilihan Jurusan",
+      render: (a) => (
+        <Badge
+          variant="outline"
+          className="text-[10px] font-semibold bg-primary/5 text-primary border-primary/20"
+        >
+          {a.major?.code || "RPL"}
+        </Badge>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status Seleksi",
+      render: (a) => getStatusBadge(a.status),
+    },
+    {
+      key: "date",
+      header: "Tanggal Daftar",
+      render: (a) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(a.createdAt).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+          })}
+        </span>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-            Verifikasi Pendaftaran PPDB
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+            Verifikasi & Seleksi PPDB
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Periksa berkas pendaftar, validasi kelulusan, dan kelola status seleksi.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Kelola berkas calon siswa baru, validasi dokumen, dan tentukan hasil seleksi.
           </p>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari nama, No. Reg, atau NISN..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-xl h-9 text-xs"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
-          {["ALL", "PENDING", "VERIFIED", "ACCEPTED", "REJECTED"].map((st) => (
+      {/* Reusable Data Table with Status Filter */}
+      <DataTable<PPDBApplicant>
+        data={filteredApplicants}
+        columns={columns}
+        keyExtractor={(a) => a.id}
+        searchPlaceholder="Cari nomor pendaftaran, nama, atau asal sekolah..."
+        searchKey={(a) => `${a.registrationNo} ${a.fullName} ${a.previousSchool}`}
+        pageSize={10}
+        emptyTitle="Belum Ada Pendaftar"
+        emptyDescription="Tidak ada data calon siswa yang cocok dengan filter yang dipilih."
+        filterSlot={
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-10 rounded-xl border bg-card px-3 text-xs font-semibold text-foreground cursor-pointer"
+          >
+            <option value="ALL">Semua Status</option>
+            <option value="PENDING">Menunggu Verifikasi</option>
+            <option value="VERIFIED">Terverifikasi</option>
+            <option value="ACCEPTED">Diterima</option>
+            <option value="REJECTED">Ditolak</option>
+          </select>
+        }
+        actions={(a) => (
+          <div className="flex items-center justify-end gap-1">
             <Button
-              key={st}
               size="sm"
-              variant={statusFilter === st ? "default" : "outline"}
-              onClick={() => setStatusFilter(st)}
-              className="text-xs rounded-xl h-8"
+              variant="outline"
+              className="h-8 px-2.5 text-xs font-semibold rounded-lg gap-1"
+              onClick={() => {
+                setSelectedApplicant(a)
+                setNewStatus(a.status)
+                setNotes(a.notes || "")
+              }}
             >
-              {st === "ALL" ? "Semua" : st}
+              <Eye className="h-3.5 w-3.5" />
+              Verifikasi
             </Button>
-          ))}
-        </div>
-      </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+              title="Hapus Pendaftar"
+              onClick={() => setDeleteId(a.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+        mobileCardRender={(a, actionButtons) => (
+          <div className="rounded-2xl border bg-card p-4 space-y-3 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs font-bold text-primary">
+                {a.registrationNo}
+              </span>
+              {getStatusBadge(a.status)}
+            </div>
+            <div>
+              <p className="font-bold text-sm text-foreground">{a.fullName}</p>
+              <p className="text-xs text-muted-foreground">
+                Asal: {a.previousSchool} • Pilihan: {a.major?.name || "Program Keahlian"}
+              </p>
+            </div>
+            <div className="flex justify-end pt-2 border-t">{actionButtons}</div>
+          </div>
+        )}
+      />
 
-      {/* Applicants Table */}
-      <Card className="rounded-2xl border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="text-xs">
-              <TableHead>No. Registrasi</TableHead>
-              <TableHead>Nama Calon Siswa</TableHead>
-              <TableHead>Asal Sekolah</TableHead>
-              <TableHead>Jurusan Pilihan</TableHead>
-              <TableHead>Kontak</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-xs text-muted-foreground">
-                  Tidak ada pendaftar ditemukan.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((a) => (
-                <TableRow key={a.id} className="text-xs">
-                  <TableCell className="font-mono font-bold text-primary">
-                    {a.registrationNo}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-0.5">
-                      <p className="font-bold text-foreground">{a.fullName}</p>
-                      <p className="text-[11px] text-muted-foreground font-mono">
-                        NISN: {a.nisn}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{a.previousSchool}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px]">
-                      {a.major?.code || "RPL"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-0.5 text-muted-foreground text-[11px]">
-                      <p>{a.phone}</p>
-                      <p className="truncate max-w-[150px]">{a.email}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        a.status === "ACCEPTED"
-                          ? "default"
-                          : a.status === "VERIFIED"
-                          ? "secondary"
-                          : a.status === "REJECTED"
-                          ? "destructive"
-                          : "outline"
-                      }
-                      className="text-[10px]"
-                    >
-                      {a.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-xs rounded-lg"
-                        onClick={() => {
-                          setSelectedApplicant(a)
-                          setNewStatus(a.status)
-                          setNotes(a.notes || "")
-                        }}
-                      >
-                        Verifikasi
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-destructive"
-                        onClick={() => handleDelete(a.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
-
-      {/* Verification Dialog */}
+      {/* Detail & Verification Dialog */}
       <Dialog
-        open={!!selectedApplicant}
+        open={Boolean(selectedApplicant)}
         onOpenChange={(open) => !open && setSelectedApplicant(null)}
       >
-        <DialogContent className="max-w-md">
-          {selectedApplicant && (
-            <div className="space-y-4 pt-2">
-              <DialogHeader>
-                <DialogTitle>Verifikasi Berkas Pendaftar</DialogTitle>
-              </DialogHeader>
+        <DialogContent className="sm:max-w-lg rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Verifikasi Berkas Calon Siswa
+            </DialogTitle>
+          </DialogHeader>
 
-              <div className="space-y-2 text-xs bg-muted/40 p-3.5 rounded-xl border">
-                <p>
-                  <strong>No. Registrasi:</strong> {selectedApplicant.registrationNo}
-                </p>
-                <p>
-                  <strong>Nama Lengkap:</strong> {selectedApplicant.fullName}
-                </p>
-                <p>
-                  <strong>Pilihan Jurusan:</strong> {selectedApplicant.major?.name || "RPL"}
-                </p>
-                {selectedApplicant.documentUrl ? (
-                  <p className="pt-1">
-                    <a
-                      href={selectedApplicant.documentUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-primary font-semibold hover:underline"
+          {selectedApplicant && (
+            <form onSubmit={handleUpdateStatus} className="space-y-4 pt-2">
+              <div className="rounded-xl border bg-muted/30 p-3 space-y-1.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">No. Registrasi:</span>
+                  <span className="font-mono font-bold text-primary">
+                    {selectedApplicant.registrationNo}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Nama Lengkap:</span>
+                  <span className="font-semibold text-foreground">
+                    {selectedApplicant.fullName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">NISN / NIK:</span>
+                  <span className="font-mono text-foreground">
+                    {selectedApplicant.nisn} / {selectedApplicant.nik}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pilihan Jurusan:</span>
+                  <span className="font-semibold text-foreground">
+                    {selectedApplicant.major?.name || "RPL"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Kontak (HP/Email):</span>
+                  <span className="text-foreground">
+                    {selectedApplicant.phone} • {selectedApplicant.email}
+                  </span>
+                </div>
+                {selectedApplicant.documentUrl && (
+                  <div className="pt-2 border-t flex justify-end">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7 gap-1"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      Buka Dokumen Berkas Terlampir
-                    </a>
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground italic">
-                    Pendaftar belum melampirkan berkas dokumen digital.
-                  </p>
+                      <a
+                        href={selectedApplicant.documentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Buka Dokumen Unggahan
+                      </a>
+                    </Button>
+                  </div>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold">Ubah Status Seleksi</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Ubah Status Verifikasi Seleksi
+                </label>
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full h-9 rounded-xl border bg-transparent px-3 text-xs"
+                  className="w-full h-10 rounded-xl border bg-card px-3 text-xs font-semibold"
                 >
-                  <option value="PENDING">PENDING (Menunggu Berkas)</option>
-                  <option value="VERIFIED">VERIFIED (Berkas Terverifikasi)</option>
-                  <option value="ACCEPTED">ACCEPTED (Diterima / Lolos Seleksi)</option>
-                  <option value="REJECTED">REJECTED (Ditolak / Tidak Memenuhi Syarat)</option>
+                  <option value="PENDING">Menunggu Verifikasi</option>
+                  <option value="VERIFIED">Terverifikasi (Lolos Berkas)</option>
+                  <option value="ACCEPTED">Diterima Sebagai Siswa Baru</option>
+                  <option value="REJECTED">Ditolak / Berkas Tidak Sesuai</option>
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold">Catatan Panitia PPDB</label>
-                <Input
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Catatan Tim Panitia Seleksi
+                </label>
+                <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Contoh: Rapor terverifikasi, nilai matematika 90"
+                  placeholder="Catatan hasil verifikasi berkas atau jadwal tes wawancara..."
+                  rows={3}
                   className="rounded-xl text-xs"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-2">
+              <div className="pt-4 flex justify-end gap-2 border-t">
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setSelectedApplicant(null)}
+                  className="rounded-xl"
                 >
                   Batal
                 </Button>
                 <Button
+                  type="submit"
                   size="sm"
-                  onClick={handleUpdateStatus}
                   disabled={isUpdating}
+                  className="rounded-xl min-w-24 font-semibold"
                 >
-                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan Status"}
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Simpan Status"
+                  )}
                 </Button>
               </div>
-            </div>
+            </form>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={Boolean(deleteId)}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Hapus Data Pendaftaran PPDB?"
+        description="Data pendaftaran calon siswa ini akan dihapus secara permanen dari sistem seleksi."
+        confirmText="Hapus Data"
+        cancelText="Batal"
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

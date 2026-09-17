@@ -1,87 +1,96 @@
 import { Metadata } from "next"
-import { Calendar, MapPin, Clock, ArrowRight } from "lucide-react"
+import { Calendar, MapPin, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
+import { PageHeader } from "@/components/common/page-header"
+import { EmptyState } from "@/components/common/empty-state"
 import { getEvents } from "@/lib/data"
 
 export const metadata: Metadata = {
   title: "Agenda & Kalender Kegiatan",
-  description: "Jadwal kegiatan akademik, ujian kompetensi, workshop, seminar, dan acara resmi SMK Negeri 1 Digital Nusantara.",
+  description:
+    "Jadwal kegiatan akademik, ujian kompetensi, workshop, seminar, dan acara resmi SMK Negeri 1 Digital Nusantara.",
 }
 
 export default async function AgendaPage() {
   const events = await getEvents(20)
 
   return (
-    <div className="container mx-auto px-4 md:px-8 py-12 md:py-16 space-y-12">
-      {/* Header */}
-      <div className="text-center max-w-2xl mx-auto space-y-3">
-        <Badge variant="outline" className="px-3.5 py-1 text-xs">
-          Kalender Kegiatan
-        </Badge>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-          Agenda & Kegiatan Sekolah
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Jadwal resmi pelaksanaan agenda akademik, pameran karya, ujian sertifikasi, dan ekstrakurikuler.
-        </p>
-      </div>
+    <div className="flex flex-col gap-10 md:gap-14 pb-20">
+      <PageHeader
+        badge="Kalender Kegiatan"
+        title="Agenda & Kegiatan Sekolah"
+        subtitle="Jadwal resmi pelaksanaan agenda akademik, pameran karya, ujian sertifikasi, dan ekstrakurikuler."
+        breadcrumb={[
+          { label: "Informasi", href: "/berita" },
+          { label: "Agenda Kegiatan" },
+        ]}
+      />
 
-      {/* Events Timeline / List */}
-      <div className="max-w-4xl mx-auto space-y-6">
-        {events.map((event) => {
-          const start = new Date(event.startDate)
-          const end = event.endDate ? new Date(event.endDate) : null
+      <div className="container mx-auto px-4 md:px-8 space-y-4 max-w-4xl">
+        {events.length === 0 ? (
+          <EmptyState
+            icon={Calendar}
+            title="Belum Ada Agenda"
+            description="Saat ini belum ada jadwal agenda mendatang yang tercatat."
+          />
+        ) : (
+          events.map((event) => {
+            const start = new Date(event.startDate)
+            const end = event.endDate ? new Date(event.endDate) : null
 
-          return (
-            <Card
-              key={event.id}
-              className="overflow-hidden rounded-2xl border bg-card/80 hover:border-primary/50 transition-all hover:shadow-md"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 sm:p-8 items-center">
-                {/* Date Block */}
-                <div className="md:col-span-3 flex md:flex-col items-center justify-center p-4 rounded-xl bg-primary/10 text-primary text-center border border-primary/20 gap-3 md:gap-0">
-                  <span className="text-3xl sm:text-4xl font-extrabold leading-none">
-                    {start.getDate()}
-                  </span>
-                  <span className="text-sm font-bold uppercase tracking-wider mt-1">
-                    {start.toLocaleString("id-ID", { month: "long" })}
-                  </span>
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {start.getFullYear()}
-                  </span>
-                </div>
-
-                {/* Content Block */}
-                <div className="md:col-span-9 space-y-3">
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                    {event.title}
-                  </h2>
-
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5 font-medium text-foreground">
-                      <MapPin className="h-3.5 w-3.5 text-primary" />
-                      {event.location}
+            return (
+              <Card
+                key={event.id}
+                className="overflow-hidden rounded-2xl border bg-card hover:border-primary/40 transition-colors shadow-2xs"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 items-center">
+                  {/* Date Block (3 cols) */}
+                  <div className="md:col-span-3 flex md:flex-col items-center justify-center p-4 rounded-xl bg-primary text-primary-foreground text-center shadow-xs gap-3 md:gap-0">
+                    <span className="text-3xl sm:text-4xl font-black leading-none">
+                      {start.getDate()}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-primary" />
-                      Pukul 08.00 WIB - Selesai
+                    <span className="text-xs font-extrabold uppercase tracking-wider mt-1 opacity-90">
+                      {start.toLocaleString("id-ID", { month: "short" })}
                     </span>
-                    {end && (
-                      <span className="text-xs text-primary font-medium">
-                        (Berakhir s.d {end.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })})
-                      </span>
-                    )}
+                    <span className="text-[11px] font-medium opacity-80">
+                      {start.getFullYear()}
+                    </span>
                   </div>
 
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {event.description}
-                  </p>
+                  {/* Content Block (9 cols) */}
+                  <div className="md:col-span-9 space-y-2">
+                    <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                      {event.title}
+                    </h2>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span className="font-medium text-foreground">{event.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span>08.00 - 15.00 WIB</span>
+                      </div>
+                      {end && (
+                        <div className="flex items-center gap-1.5 text-[11px]">
+                          <span>s/d {end.toLocaleDateString("id-ID")}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {event.description && (
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
+                        {event.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          )
-        })}
+              </Card>
+            )
+          })
+        )}
       </div>
     </div>
   )

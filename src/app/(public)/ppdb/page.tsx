@@ -1,30 +1,46 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import {
-  GraduationCap,
   Calendar,
   CheckCircle2,
   FileText,
   HelpCircle,
   ArrowRight,
   ClipboardList,
-  UserCheck,
-  Award,
+  UserPlus,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { PageHeader } from "@/components/common/page-header"
 
 export const metadata: Metadata = {
   title: "Informasi PPDB Online 2026/2027",
-  description: "Panduan lengkap alur pendaftaran, persyaratan berkas, jadwal seleksi, dan FAQ PPDB Online SMK Negeri 1 Digital Nusantara.",
+  description:
+    "Panduan lengkap alur pendaftaran, persyaratan berkas, jadwal seleksi, dan FAQ PPDB Online SMK Negeri 1 Digital Nusantara.",
 }
 
 const SCHEDULES = [
-  { wave: "Gelombang 1 (Jalur Prestasi)", period: "1 April - 30 April 2026", desc: "Bebas tes tulis untuk peraih juara OSN/LKS dan nilai rapor >= 85." },
-  { wave: "Gelombang 2 (Jalur Reguler)", period: "1 Mei - 15 Juni 2026", desc: "Seleksi berbasis tes bakat skolastik dan wawancara minat kejuruan." },
-  { wave: "Pengumuman Hasil Seleksi", period: "20 Juni 2026 (Pukul 10.00 WIB)", desc: "Diumumkan online melalui portal resmi PPDB." },
-  { wave: "Daftar Ulang & Pengambilan Atribut", period: "22 Juni - 30 Juni 2026", desc: "Verifikasi berkas fisik dan pengukuran seragam di kampus." },
+  {
+    wave: "Gelombang 1 (Jalur Prestasi)",
+    period: "1 April - 30 April 2026",
+    desc: "Bebas tes tulis untuk peraih juara OSN/LKS dan nilai rapor >= 85.",
+  },
+  {
+    wave: "Gelombang 2 (Jalur Reguler)",
+    period: "1 Mei - 15 Juni 2026",
+    desc: "Seleksi berbasis tes bakat skolastik dan wawancara minat kejuruan.",
+  },
+  {
+    wave: "Pengumuman Hasil Seleksi",
+    period: "20 Juni 2026 (Pukul 10.00 WIB)",
+    desc: "Diumumkan online melalui portal resmi PPDB.",
+  },
+  {
+    wave: "Daftar Ulang & Pengambilan Atribut",
+    period: "22 Juni - 30 Juni 2026",
+    desc: "Verifikasi berkas fisik dan pengukuran seragam di kampus.",
+  },
 ]
 
 const REQUIREMENTS = [
@@ -57,183 +73,193 @@ const FAQS = [
 
 export default function PPDBPage() {
   return (
-    <div className="container mx-auto px-4 md:px-8 py-12 md:py-16 space-y-16">
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-blue-700 text-primary-foreground p-8 sm:p-12 md:p-16 shadow-xl">
-        <div className="relative z-10 max-w-2xl space-y-4 text-left">
-          <Badge className="bg-white/20 text-white backdrop-blur-xs border-white/20">
-            Tahun Ajaran 2026/2027
-          </Badge>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-            Penerimaan Peserta Didik Baru (PPDB) Online
-          </h1>
-          <p className="text-primary-foreground/90 text-base sm:text-lg leading-relaxed">
-            Selamat datang calon generasi juara. Bergabunglah bersama institusi pendidikan vokasi digital unggulan untuk masa depan karir yang cemerlang.
+    <div className="flex flex-col gap-12 md:gap-16 pb-20">
+      <PageHeader
+        badge="PPDB 2026/2027"
+        title="Penerimaan Peserta Didik Baru"
+        subtitle="Selamat datang calon talenta masa depan. Daftarkan diri Anda dan raih karir digital impian bersama SMKN 1 Digital Nusantara."
+        breadcrumb={[{ label: "PPDB", href: "/ppdb" }, { label: "Informasi" }]}
+      >
+        <Button asChild size="lg" className="rounded-xl font-bold gap-2">
+          <Link href="/ppdb/daftar">
+            <UserPlus className="h-4 w-4" />
+            Daftar Sekarang Online
+          </Link>
+        </Button>
+      </PageHeader>
+
+      <div className="container mx-auto px-4 md:px-8 space-y-16">
+        {/* Alur Pendaftaran 4 Langkah */}
+        <section className="space-y-6">
+          <div className="space-y-1">
+            <Badge
+              variant="outline"
+              className="bg-primary/5 text-primary border-primary/20 text-xs font-semibold px-3 py-0.5 rounded-full"
+            >
+              Tahapan Seleksi
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+              Alur Pendaftaran Online
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="rounded-2xl border bg-card p-6 space-y-3 shadow-2xs relative">
+              <span className="text-3xl font-black text-primary/30">01</span>
+              <h3 className="font-extrabold text-base text-foreground">
+                Isi Formulir Online
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Lengkapi biodata calon siswa, data orang tua, dan pilih program
+                keahlian prioritas.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border bg-card p-6 space-y-3 shadow-2xs relative">
+              <span className="text-3xl font-black text-primary/30">02</span>
+              <h3 className="font-extrabold text-base text-foreground">
+                Unggah Dokumen
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Upload scan SKL/Ijazah, KK, pas foto, dan sertifikat prestasi
+                dalam format PDF/JPG.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border bg-card p-6 space-y-3 shadow-2xs relative">
+              <span className="text-3xl font-black text-primary/30">03</span>
+              <h3 className="font-extrabold text-base text-foreground">
+                Verifikasi Panitia
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Panitia PPDB memverifikasi keabsahan dokumen dan nilai rapor
+                secara transparan.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border bg-card p-6 space-y-3 shadow-2xs relative">
+              <span className="text-3xl font-black text-primary/30">04</span>
+              <h3 className="font-extrabold text-base text-foreground">
+                Pengumuman & Daftar Ulang
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Cek hasil seleksi melalui portal dan lakukan daftar ulang berkas
+                fisik di kampus.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Jadwal Pelaksanaan */}
+        <section className="space-y-6">
+          <div className="space-y-1">
+            <Badge
+              variant="outline"
+              className="bg-primary/5 text-primary border-primary/20 text-xs font-semibold px-3 py-0.5 rounded-full"
+            >
+              Timeline
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+              Jadwal Gelombang Pendaftaran
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {SCHEDULES.map((s, idx) => (
+              <Card key={idx} className="rounded-2xl border bg-card shadow-2xs">
+                <CardContent className="p-6 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-base text-foreground">
+                      {s.wave}
+                    </h3>
+                    <Badge variant="outline" className="text-xs text-primary font-semibold">
+                      {s.period}
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    {s.desc}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Persyaratan Berkas */}
+        <section className="rounded-3xl border bg-card p-8 md:p-12 space-y-6 shadow-2xs">
+          <div className="space-y-1">
+            <Badge
+              variant="outline"
+              className="bg-primary/5 text-primary border-primary/20 text-xs font-semibold px-3 py-0.5 rounded-full"
+            >
+              Checklist
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+              Persyaratan Berkas Dokumen
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {REQUIREMENTS.map((req, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3.5 rounded-xl border bg-background">
+                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-xs sm:text-sm text-foreground">{req}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ Accordion */}
+        <section className="space-y-6 max-w-4xl mx-auto">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+              Pertanyaan yang Sering Diajukan (FAQ)
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Jawaban seputar kendala dan pertanyaan umum tentang PPDB Online.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {FAQS.map((faq, idx) => (
+              <Card key={idx} className="rounded-2xl border bg-card shadow-2xs">
+                <CardContent className="p-5 space-y-2">
+                  <h3 className="font-bold text-sm sm:text-base text-foreground flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-primary shrink-0" />
+                    {faq.q}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-6">
+                    {faq.a}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Bottom Banner */}
+        <div className="rounded-3xl bg-primary text-primary-foreground p-8 md:p-12 text-center space-y-4 shadow-md">
+          <h2 className="text-2xl sm:text-3xl font-black text-white">
+            Siap Mengisi Formulir Pendaftaran?
+          </h2>
+          <p className="text-xs sm:text-sm text-primary-foreground/90 max-w-xl mx-auto">
+            Proses hanya memakan waktu 5-10 menit. Pastikan Anda telah menyiapkan
+            NISN, data diri, dan berkas foto.
           </p>
-          <div className="pt-4 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg" variant="secondary" className="rounded-full shadow-lg font-bold">
-              <Link href="/ppdb/daftar" className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5" />
-                Daftar Sekarang Online
-              </Link>
-            </Button>
+          <div className="pt-2">
             <Button
               asChild
               size="lg"
-              variant="outline"
-              className="rounded-full bg-white/10 text-white border-white/30 hover:bg-white/20"
+              className="bg-white text-primary hover:bg-white/90 rounded-xl font-extrabold px-6"
             >
-              <a href="#alur">Lihat Alur Pendaftaran</a>
+              <Link href="/ppdb/daftar" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Buka Formulir Pendaftaran PPDB
+              </Link>
             </Button>
           </div>
         </div>
       </div>
-
-      {/* Alur Pendaftaran (Steps) */}
-      <section id="alur" className="space-y-8 scroll-mt-24">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <Badge variant="outline" className="px-3.5 py-1 text-xs">
-            Panduan Langkah
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Alur Pendaftaran PPDB
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            4 langkah mudah untuk menjadi bagian dari keluarga besar sekolah kami.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            {
-              step: "01",
-              title: "Isi Formulir Online",
-              desc: "Lengkapi identitas diri, NISN, NIK, asal sekolah, dan pilihan jurusan pada halaman pendaftaran daring.",
-            },
-            {
-              step: "02",
-              title: "Unggah Berkas",
-              desc: "Unggah dokumen pendukung (scan rapor, KK, akta lahir, piagam prestasi) dalam format PDF/JPG.",
-            },
-            {
-              step: "03",
-              title: "Verifikasi Panitia",
-              desc: "Panitia PPDB memverifikasi kelengkapan berkas dan memberikan status validasi secara daring.",
-            },
-            {
-              step: "04",
-              title: "Pengumuman & Daftar Ulang",
-              desc: "Cek nomor pendaftaran pada pengumuman resmi kelulusan, dilanjutkan dengan daftar ulang.",
-            },
-          ].map((item) => (
-            <Card key={item.step} className="rounded-2xl border bg-card p-6 space-y-3 shadow-xs">
-              <span className="text-3xl font-black text-primary/40 font-mono">
-                {item.step}
-              </span>
-              <h3 className="font-bold text-lg text-foreground leading-tight">
-                {item.title}
-              </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                {item.desc}
-              </p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Jadwal & Persyaratan Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Jadwal Pelaksanaan (7 cols) */}
-        <section className="lg:col-span-7 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Jadwal Seleksi PPDB 2026
-              </h2>
-              <p className="text-xs text-muted-foreground">Tahapan penting yang wajib diperhatikan</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {SCHEDULES.map((s, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border bg-card p-5 space-y-1.5 hover:border-primary/50 transition-colors"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="font-bold text-base text-foreground">{s.wave}</h4>
-                  <Badge variant="secondary" className="font-mono text-xs">
-                    {s.period}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Persyaratan Pendaftaran (5 cols) */}
-        <section className="lg:col-span-5 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <ClipboardList className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Persyaratan Berkas
-              </h2>
-              <p className="text-xs text-muted-foreground">Kelengkapan dokumen administrasi</p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-card p-6 space-y-3.5">
-            {REQUIREMENTS.map((req, idx) => (
-              <div key={idx} className="flex items-start gap-3 text-xs sm:text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>{req}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      {/* FAQ Section */}
-      <section className="space-y-8">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <Badge variant="outline" className="px-3.5 py-1 text-xs">
-            Tanya Jawab
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Pertanyaan yang Sering Diajukan (FAQ)
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {FAQS.map((faq, idx) => (
-            <Card key={idx} className="rounded-2xl border bg-card p-6 space-y-2">
-              <h4 className="font-bold text-base text-foreground flex items-start gap-2">
-                <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span>{faq.q}</span>
-              </h4>
-              <p className="text-xs sm:text-sm text-muted-foreground pl-7 leading-relaxed">
-                {faq.a}
-              </p>
-            </Card>
-          ))}
-        </div>
-
-        <div className="text-center pt-4">
-          <Button asChild size="lg" className="rounded-full px-8">
-            <Link href="/ppdb/daftar" className="flex items-center gap-2">
-              Mulai Pendaftaran Sekarang
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </section>
     </div>
   )
 }
