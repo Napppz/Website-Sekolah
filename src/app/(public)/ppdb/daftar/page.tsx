@@ -53,12 +53,14 @@ export default function PPDBDaftarPage() {
   const [successRegNo, setSuccessRegNo] = React.useState<string | null>(null)
   const [uploadingFile, setUploadingFile] = React.useState(false)
   const [uploadedDocUrl, setUploadedDocUrl] = React.useState<string | null>(null)
+  const [majorsList, setMajorsList] = React.useState(MAJORS_OPTION)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<PPDBFormData>({
     resolver: zodResolver(PPDBFormSchema),
     defaultValues: {
@@ -66,6 +68,28 @@ export default function PPDBDaftarPage() {
       majorId: "major-1",
     },
   })
+
+  React.useEffect(() => {
+    async function loadMajors() {
+      try {
+        const res = await fetch("/api/majors")
+        const json = await res.json()
+        if (json.majors && json.majors.length > 0) {
+          const list = json.majors.map((m: any) => ({
+            id: m.id,
+            name: `${m.name} (${m.code})`,
+          }))
+          setMajorsList(list)
+          if (list[0]?.id) {
+            setValue("majorId", list[0].id)
+          }
+        }
+      } catch {
+        // fallback
+      }
+    }
+    loadMajors()
+  }, [setValue])
 
   // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,7 +388,7 @@ export default function PPDBDaftarPage() {
                       {...register("majorId")}
                       className="w-full h-10 rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                      {MAJORS_OPTION.map((m) => (
+                      {majorsList.map((m) => (
                         <option key={m.id} value={m.id}>
                           {m.name}
                         </option>

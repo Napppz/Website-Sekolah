@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized: Hanya admin yang dapat mengakses daftar siswa" }, { status: 401 })
+  }
+
   const searchParams = req.nextUrl.searchParams
   const q = searchParams.get("q") || ""
 

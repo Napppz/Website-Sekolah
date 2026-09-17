@@ -2,9 +2,14 @@
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 export async function updateSchoolProfile(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const data = {
       name: formData.get("name") as string,
       npsn: formData.get("npsn") as string,

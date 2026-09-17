@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const TeacherSchema = z.object({
   nip: z.string().min(5, "NIP minimal 5 karakter"),
@@ -19,6 +20,10 @@ const TeacherSchema = z.object({
 
 export async function createTeacher(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       nip: formData.get("nip") as string,
       name: formData.get("name") as string,
@@ -51,6 +56,10 @@ export async function createTeacher(formData: FormData) {
 
 export async function updateTeacher(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       nip: formData.get("nip") as string,
       name: formData.get("name") as string,
@@ -84,6 +93,10 @@ export async function updateTeacher(id: string, formData: FormData) {
 
 export async function deleteTeacher(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.teacher.delete({
       where: { id },
     })

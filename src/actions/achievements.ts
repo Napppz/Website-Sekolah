@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const AchievementSchema = z.object({
   title: z.string().min(5, "Judul prestasi minimal 5 karakter"),
@@ -23,6 +24,10 @@ function slugify(text: string) {
 
 export async function createAchievement(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       title: formData.get("title") as string,
       description: formData.get("description") as string,
@@ -56,6 +61,10 @@ export async function createAchievement(formData: FormData) {
 
 export async function updateAchievement(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       title: formData.get("title") as string,
       description: formData.get("description") as string,
@@ -86,6 +95,10 @@ export async function updateAchievement(id: string, formData: FormData) {
 
 export async function deleteAchievement(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.achievement.delete({
       where: { id },
     })

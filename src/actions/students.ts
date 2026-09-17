@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const StudentSchema = z.object({
   nisn: z.string().length(10, "NISN harus 10 digit"),
@@ -16,6 +17,10 @@ const StudentSchema = z.object({
 
 export async function createStudent(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       nisn: formData.get("nisn") as string,
       nis: formData.get("nisn") ? (formData.get("nis") as string) : "",
@@ -45,6 +50,10 @@ export async function createStudent(formData: FormData) {
 
 export async function updateStudent(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       nisn: formData.get("nisn") as string,
       nis: formData.get("nis") as string,
@@ -75,6 +84,10 @@ export async function updateStudent(id: string, formData: FormData) {
 
 export async function deleteStudent(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.student.delete({
       where: { id },
     })

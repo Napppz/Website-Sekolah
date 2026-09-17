@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const FacilitySchema = z.object({
   name: z.string().min(3, "Nama fasilitas minimal 3 karakter"),
@@ -22,6 +23,10 @@ function slugify(text: string) {
 
 export async function createFacility(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       name: formData.get("name") as string,
       category: formData.get("category") as string,
@@ -54,6 +59,10 @@ export async function createFacility(formData: FormData) {
 
 export async function updateFacility(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       name: formData.get("name") as string,
       category: formData.get("category") as string,
@@ -83,6 +92,10 @@ export async function updateFacility(id: string, formData: FormData) {
 
 export async function deleteFacility(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.facility.delete({
       where: { id },
     })

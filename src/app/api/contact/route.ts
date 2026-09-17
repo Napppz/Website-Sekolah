@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 export async function GET() {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized: Hanya admin yang dapat melihat pesan kontak" }, { status: 401 })
+  }
+
   try {
     const messages = await prisma.contactMessage.findMany({
       orderBy: { createdAt: "desc" },

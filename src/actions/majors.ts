@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const MajorSchema = z.object({
   code: z.string().min(2, "Kode jurusan minimal 2 karakter"),
@@ -22,6 +23,10 @@ function slugify(text: string) {
 
 export async function createMajor(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const name = formData.get("name") as string
     const raw = {
       code: (formData.get("code") as string).toUpperCase(),
@@ -55,6 +60,10 @@ export async function createMajor(formData: FormData) {
 
 export async function updateMajor(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const name = formData.get("name") as string
     const raw = {
       code: (formData.get("code") as string).toUpperCase(),
@@ -89,6 +98,10 @@ export async function updateMajor(id: string, formData: FormData) {
 
 export async function deleteMajor(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.major.delete({
       where: { id },
     })

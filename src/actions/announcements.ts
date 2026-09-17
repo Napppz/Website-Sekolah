@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const AnnouncementSchema = z.object({
   title: z.string().min(5, "Judul pengumuman minimal 5 karakter"),
@@ -20,6 +21,10 @@ function slugify(text: string) {
 
 export async function createAnnouncement(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       title: formData.get("title") as string,
       content: formData.get("content") as string,
@@ -50,6 +55,10 @@ export async function createAnnouncement(formData: FormData) {
 
 export async function updateAnnouncement(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       title: formData.get("title") as string,
       content: formData.get("content") as string,
@@ -77,6 +86,10 @@ export async function updateAnnouncement(id: string, formData: FormData) {
 
 export async function deleteAnnouncement(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.announcement.delete({
       where: { id },
     })

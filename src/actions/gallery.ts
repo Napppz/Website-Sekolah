@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const GallerySchema = z.object({
   title: z.string().min(3, "Judul foto minimal 3 karakter"),
@@ -14,6 +15,10 @@ const GallerySchema = z.object({
 
 export async function createGalleryItem(formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       title: formData.get("title") as string,
       category: formData.get("category") as string,
@@ -41,6 +46,10 @@ export async function createGalleryItem(formData: FormData) {
 
 export async function deleteGalleryItem(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.gallery.delete({
       where: { id },
     })

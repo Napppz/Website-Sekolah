@@ -24,7 +24,10 @@ function slugify(text: string) {
 export async function createNews(formData: FormData) {
   try {
     const session = await auth()
-    const authorId = session?.user?.id || (await prisma.user.findFirst())?.id || "admin-dev-id"
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
+    const authorId = session.user.id || (await prisma.user.findFirst())?.id || "admin-dev-id"
 
     const raw = {
       title: formData.get("title") as string,
@@ -60,6 +63,10 @@ export async function createNews(formData: FormData) {
 
 export async function updateNews(id: string, formData: FormData) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     const raw = {
       title: formData.get("title") as string,
       categoryId: formData.get("categoryId") as string,
@@ -89,6 +96,10 @@ export async function updateNews(id: string, formData: FormData) {
 
 export async function togglePublishNews(id: string, currentStatus: boolean) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.news.update({
       where: { id },
       data: { isPublished: !currentStatus },
@@ -103,6 +114,10 @@ export async function togglePublishNews(id: string, currentStatus: boolean) {
 
 export async function deleteNews(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.news.delete({
       where: { id },
     })

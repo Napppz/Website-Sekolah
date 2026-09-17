@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      { source: "/admin/teachers", destination: "/admin/guru" },
+      { source: "/admin/students", destination: "/admin/siswa" },
+      { source: "/admin/majors", destination: "/admin/jurusan" },
+      { source: "/admin/facilities", destination: "/admin/fasilitas" },
+      { source: "/admin/news", destination: "/admin/berita" },
+      { source: "/admin/announcements", destination: "/admin/pengumuman" },
+      { source: "/admin/events", destination: "/admin/agenda" },
+      { source: "/admin/achievements", destination: "/admin/prestasi" },
+      { source: "/admin/gallery", destination: "/admin/galeri" },
+      { source: "/admin/messages", destination: "/admin/kontak" },
+    ]
+  },
 };
 
 export default nextConfig;

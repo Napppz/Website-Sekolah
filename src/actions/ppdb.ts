@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const PPDBRegisterSchema = z.object({
   fullName: z.string().min(3, "Nama lengkap minimal 3 karakter"),
@@ -42,42 +43,80 @@ export async function registerPPDB(formData: FormData) {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000)
     const registrationNo = `PPDB-2026-${randomSuffix}`
 
-    try {
-      const record = await prisma.pPDBRegistration.create({
-        data: {
-          registrationNo,
-          fullName: validated.fullName,
-          nik: validated.nik,
-          nisn: validated.nisn,
-          birthPlace: validated.birthPlace,
-          birthDate: new Date(validated.birthDate),
-          gender: validated.gender,
-          address: validated.address,
-          previousSchool: validated.previousSchool,
-          phone: validated.phone,
-          email: validated.email,
-          majorId: validated.majorId,
-          documentUrl: validated.documentUrl || null,
-          status: "PENDING",
+    // Resolve majorId safely to existing record in PostgreSQL
+    let targetMajorId = validated.majorId
+    const existingMajor = await prisma.major.findUnique({
+      where: { id: targetMajorId },
+    })
+
+    if (!existingMajor) {
+      const codeMap: Record<string, string> = {
+        "major-1": "RPL",
+        "major-2": "TJKT",
+        "major-3": "DKV",
+        "major-4": "MPLB",
+        "major-5": "AKL",
+      }
+      const targetCode = codeMap[validated.majorId] || validated.majorId
+      const matchedMajor = await prisma.major.findFirst({
+        where: {
+          OR: [
+            { code: { equals: targetCode, mode: "insensitive" } },
+            { slug: { contains: targetCode, mode: "insensitive" } },
+            { name: { contains: targetCode, mode: "insensitive" } },
+          ],
         },
       })
-
-      revalidatePath("/admin/ppdb")
-      return { success: true, registrationNo: record.registrationNo }
-    } catch {
-      // Fallback response for dev mode
-      return { success: true, registrationNo }
+      if (matchedMajor) {
+        targetMajorId = matchedMajor.id
+      } else {
+        const firstMajor = await prisma.major.findFirst()
+        if (firstMajor) {
+          targetMajorId = firstMajor.id
+        }
+      }
     }
+
+    const record = await prisma.pPDBRegistration.create({
+      data: {
+        registrationNo,
+        fullName: validated.fullName,
+        nik: validated.nik,
+        nisn: validated.nisn,
+        birthPlace: validated.birthPlace,
+        birthDate: new Date(validated.birthDate),
+        gender: validated.gender,
+        address: validated.address,
+        previousSchool: validated.previousSchool,
+        phone: validated.phone,
+        email: validated.email,
+        majorId: targetMajorId,
+        documentUrl: validated.documentUrl || null,
+        status: "PENDING",
+      },
+    })
+
+    try {
+      revalidatePath("/admin/ppdb")
+    } catch {
+      // safe in non-HTTP contexts
+    }
+    return { success: true, registrationNo: record.registrationNo }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { success: false, error: error.issues[0]?.message || "Validasi gagal" }
     }
-    return { success: false, error: "Terjadi kesalahan saat memproses pendaftaran" }
+    console.error("PPDB Register Error:", error)
+    return { success: false, error: "Terjadi kesalahan saat memproses pendaftaran ke database" }
   }
 }
 
 export async function updatePPDBStatus(id: string, status: string, notes?: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.pPDBRegistration.update({
       where: { id },
       data: {
@@ -94,6 +133,10 @@ export async function updatePPDBStatus(id: string, status: string, notes?: strin
 
 export async function deletePPDB(id: string) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return { success: false, error: "Akses ditolak: Anda harus login sebagai admin." }
+    }
     await prisma.pPDBRegistration.delete({
       where: { id },
     })
